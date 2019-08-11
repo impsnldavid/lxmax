@@ -1,0 +1,24 @@
+{
+	"author" : "David Butler / The Impersonal Stereo",
+	"description" : "First-class support for DMX and lighting control from Max.",
+	"homepatcher" : "lxmax.maxpat",
+	"max_version_min" : "8.0", "max_version_max" : "none",
+	"name" : "@C74_PACKAGE_NAME@",
+	"os" : {
+		"macintosh" : {
+			"platform" : [ "x64" ],
+			"min_version" : "none"
+		},
+		"windows" : {
+			"platform" : [ "x64" ],
+			"min_version" : "none"
+		}
+	},
+	"package_extra" : {
+		"reverse_domain" : "com.theimpersonalstereo",
+		"copyright" : "Copyright (c) 2019 David Butler / The Impersonal Stereo"
+	},
+	"tags" : [ ],
+	"version" : "@GIT_VERSION_MAJ@.@GIT_VERSION_MIN@.@GIT_VERSION_SUB@",
+	"website" : "http://www.theimpersonalstereo.com/lxmax"
+}
