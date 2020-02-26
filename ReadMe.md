@@ -24,7 +24,7 @@ LXMax is still in the development stage and has not yet reached a first release.
 - [ ] lx.dimmer object for dimmer fixture and basic control.
 - [ ] lx.colorfixture object for basic LED and color fixture control.
 - [ ] Support for Enttec DMX USB Pro (original and Mk 2) hardware.
-- [ ] lx.fixture object for inteilligent fixture control.
+- [ ] lx.fixture object for intelligent fixture control.
 - [ ] lx.personality object for DMX input mapping to object attributes.
 - [ ] jit.lx.pixelmap object for mapping Jitter matrices to DMX output.
 - [ ] Centralized fixture management window.
