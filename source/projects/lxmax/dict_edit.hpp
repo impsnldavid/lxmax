@@ -1,3 +1,8 @@
+/// @file
+/// @ingroup	lxmax
+/// @copyright	Copyright 2019 David Butler / The Impersonal Stereo. All rights reserved.
+/// @license	Use of this source code is governed by the MIT License found in the License.md file.
+
 #pragma once
 
 #include <vector>
@@ -232,6 +237,27 @@ public:
     {
         c74::max::dictionary_deleteentry(_dictionary, c74::min::symbol(index));
     }
+
+    std::map<int, c74::min::atoms> get_entries()
+    {
+		long num_keys;
+    	c74::max::t_symbol** keys = nullptr;
+		c74::max:: dictionary_getkeys(_dictionary, &num_keys, &keys);
+
+        std::map<int, c74::min::atoms> entries;
+		
+    	for(long i = 0; i < num_keys; ++i)
+    	{
+            c74::min::symbol key = keys[i];
+    		
+    		if (key == k_sym_name || key == k_sym_type || key == k_sym_width)
+                continue;
+            
+            entries.insert(std::pair(std::stoi(key), _dictionary.at(key)));
+    	}
+
+		return entries;
+	}
     
     void clear_entries()
     {
@@ -242,7 +268,7 @@ public:
     int entry_count()
     {
         long num_keys;
-        c74::max::t_symbol** keys;
+        c74::max::t_symbol** keys = nullptr;
         c74::max::dictionary_getkeys(_dictionary, &num_keys, &keys);
         
         return num_keys - 3;
@@ -251,7 +277,7 @@ public:
     int highest_index()
     {
         long num_keys;
-        c74::max::t_symbol** keys;
+        c74::max::t_symbol** keys = nullptr;
         c74::max::dictionary_getkeys(_dictionary, &num_keys, &keys);
         
         int highest_key = 0;

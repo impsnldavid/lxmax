@@ -60,6 +60,24 @@ public:
             return {};
         }
     };
+
+	message<> quickpatch { this, "quickpatch", "Quickly add a number of universes to the configuration",
+        MIN_FUNCTION {
+
+			if (args.size() != 5)
+				return {};
+        	
+        	c74::max::t_atom rv;
+			c74::max::t_atom argv[5];
+
+        	for(int i = 0; i < 5; ++i)
+        		argv[i] = args[i];
+        	
+            c74::max::object_method_typed(_lxmax_service, symbol("quickpatch"), 5, argv, &rv);
+            
+            return {};
+        }
+    };
 };
 
 MIN_EXTERNAL(lx_config);

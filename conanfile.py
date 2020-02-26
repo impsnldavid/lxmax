@@ -5,7 +5,7 @@ class LXMaxConan(ConanFile):
 	generators = "cmake_multi"
 	
 	requires = (
-		"Poco/1.9.2@pocoproject/stable"
+		"Poco/1.9.4@pocoproject/stable"
 		)
 		
 	default_options = (

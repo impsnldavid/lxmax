@@ -1,11 +1,15 @@
 /// @file
-/// @ingroup     lxmax
-/// @copyright    Copyright 2019 David Butler / The Impersonal Stereo. All rights reserved.
-/// @license    Use of this source code is governed by the MIT License found in the License.md file.
+/// @ingroup	lxmax
+/// @copyright	Copyright 2019 David Butler / The Impersonal Stereo. All rights reserved.
+/// @license	Use of this source code is governed by the MIT License found in the License.md file.
+
+#pragma once
 
 #include <string>
 #include <unordered_map>
-#include <Poco/Platform.h>
+#include <cassert>
+
+#include "precision_helpers.hpp"
 
 namespace lxmax
 {
@@ -33,47 +37,47 @@ namespace lxmax
     {
         const std::unordered_map<color_component, std::string> k_color_to_string_map
         {
-            { ColorComponent::none , "_" },
-            { ColorComponent::red , "R" },
-            { ColorComponent::green , "G" },
-            { ColorComponent::blue , "B" },
-            { ColorComponent::cyan , "C" },
-            { ColorComponent::magenta , "M" },
-            { ColorComponent::yellow , "Y" },
-            { ColorComponent::hue , "H" },
-            { ColorComponent::saturation , "S" },
-            { ColorComponent::brightness , "Br" },
-            { ColorComponent::lightness , "L" },
-            { ColorComponent::value , "V" },
-            { ColorComponent::white , "W" },
-            { ColorComponent::amber , "A" },
-            { ColorComponent::intensity , "I" },
-            { ColorComponent::dimmer , "D" }
+            { color_component::none , "_" },
+            { color_component::red , "R" },
+            { color_component::green , "G" },
+            { color_component::blue , "B" },
+            { color_component::cyan , "C" },
+            { color_component::magenta , "M" },
+            { color_component::yellow , "Y" },
+            { color_component::hue , "H" },
+            { color_component::saturation , "S" },
+            { color_component::brightness , "Br" },
+            { color_component::lightness , "L" },
+            { color_component::value , "V" },
+            { color_component::white , "W" },
+            { color_component::amber , "A" },
+            { color_component::intensity , "I" },
+            { color_component::dimmer , "D" }
         };
     
         const std::unordered_map<std::string, color_component> k_string_to_color_map
         {
-            { "_", ColorComponent::none },
-            { "R", ColorComponent::red },
-            { "G", ColorComponent::green },
-            { "B", ColorComponent::blue },
-            { "C", ColorComponent::cyan },
-            { "M", ColorComponent::magenta },
-            { "Y", ColorComponent::yellow },
-            { "H", ColorComponent::hue },
-            { "S", ColorComponent::saturation },
-            { "Br", ColorComponent::brightness },
-            { "L", ColorComponent::lightness },
-            { "V", ColorComponent::value },
-            { "W", ColorComponent::white },
-            { "A", ColorComponent::amber },
-            { "I", ColorComponent::intensity },
-            { "D", ColorComponent::dimmer }
+            { "_", color_component::none },
+            { "R", color_component::red },
+            { "G", color_component::green },
+            { "B", color_component::blue },
+            { "C", color_component::cyan },
+            { "M", color_component::magenta },
+            { "Y", color_component::yellow },
+            { "H", color_component::hue },
+            { "S", color_component::saturation },
+            { "Br", color_component::brightness },
+            { "L", color_component::lightness },
+            { "V", color_component::value },
+            { "W", color_component::white },
+            { "A", color_component::amber },
+            { "I", color_component::intensity },
+            { "D", color_component::dimmer }
         };
-    
-        bool from_string(const std::string& stringValue, color_component& value)
+
+        inline bool from_string(const std::string& stringValue, color_component& value)
         {
-            auto it = k_string_to_color_map.find(stringValue);
+	        const auto it = k_string_to_color_map.find(stringValue);
             if (it == k_string_to_color_map.end())
             {
                 value = color_component::none;
@@ -83,11 +87,11 @@ namespace lxmax
             value = it->second;
             return true;
         }
-        
-        std::string to_string(color_component value)
+
+        inline std::string to_string(color_component value)
         {
-            auto it = k_color_to_string_map.find(value);
-            poco_assert_msg(it != k_color_to_string_map.end(),
+	        const auto it = k_color_to_string_map.find(value);
+            assert(it != k_color_to_string_map.end(),
                             "All valid color components should exist in map");
             
             return it->second;
