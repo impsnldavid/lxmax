@@ -1,3 +1,6 @@
+# Copyright 2020 David Butler. All rights reserved.
+# Use of this source code is governed by the MIT License found in the LICENSE file.
+
 from conans import ConanFile, CMake
 
 class LXMaxConan(ConanFile):

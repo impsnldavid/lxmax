@@ -3,11 +3,11 @@
 /// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
-#include "dmx_output_service.hpp"
+#include "dmx_input_service.hpp"
 
 namespace lxmax
 {
-	void dmx_output_service::on_timer(Poco::Timer& timer)
+	void dmx_input_service::on_timer(Poco::Timer& timer)
 	{
 		// TODO: Calculate full update time per universe, and implement separate update behaviours for art-net and sacn
 
@@ -84,5 +84,39 @@ namespace lxmax
 				break;
 			}
 		}
+	}
+
+	void dmx_input_service::update_multicast_groups(const std::vector<dmx_input_universe_config>& old_configs,
+	                                                 const std::vector<dmx_input_universe_config>& new_configs)
+	{
+		std::unordered_set<Poco::Net::IPAddress> addresses_to_leave;
+		std::unordered_set<Poco::Net::IPAddress> addresses_to_join;
+
+		for (const auto& c : old_configs)
+		{
+			if (c.protocol != dmx_protocol::sacn)
+				continue;
+			
+			addresses_to_leave.insert(get_sacn_multicast_address(c.protocol_universe));
+		}
+
+		for (const auto& c : new_configs)
+		{
+			if (c.protocol != dmx_protocol::sacn)
+				continue;
+			
+			auto address = get_sacn_multicast_address(c.protocol_universe);
+
+			if (addresses_to_leave.find(address) != std::end(addresses_to_leave))
+				addresses_to_leave.erase(address);
+			else
+				addresses_to_join.insert(address);
+		}
+
+		for (const auto& a : addresses_to_leave)
+			_multicast_socket.leaveGroup(a);
+
+		for (const auto& a : addresses_to_join)
+			_multicast_socket.joinGroup(a);
 	}
 }

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <algorithm>
 #include "c74_min.h"
@@ -51,11 +52,11 @@ public:
 	{
 	}
 
-	dict_edit_column(const c74::min::symbol& name, int width, const c74::min::atoms& options)
+	dict_edit_column(const c74::min::symbol& name, int width, c74::min::atoms options)
 		: _name(name),
 		  _type(column_type::_enum),
 		  _width(width),
-		  _options(options),
+		  _options(std::move(options)),
 		  _range_min(0),
 		  _range_max(1)
 	{
@@ -178,12 +179,10 @@ class dict_edit
     
 public:
 
-	dict_edit(const c74::min::symbol& dict_name, const std::vector<dict_edit_column>& columns)
+	dict_edit(const c74::min::symbol& dict_name, std::vector<dict_edit_column> columns)
 		: _dictionary(dict_name),
-        _columns(columns)
+        _columns(std::move(columns))
 	{
-        // TODO: Change _dictionary constructor to take symbol directly when bug is fixed
-        
         initialize();
 	}
     
@@ -199,14 +198,14 @@ public:
         
         if (d != nullptr)
         {
-            c74::min::dict to_import { d };
+	        const c74::min::dict to_import { d };
             _dictionary.copyunique(to_import);
         }
         
         initialize();
     }
     
-    void write_to_max_preferences(const std::string& filename)
+    void write_to_max_preferences(const std::string& filename) const
     {
         c74::min::dict output;
         output.copyunique(_dictionary);
@@ -265,7 +264,7 @@ public:
         initialize();
     }
     
-    int entry_count()
+    int entry_count() const
     {
         long num_keys;
         c74::max::t_symbol** keys = nullptr;
@@ -274,7 +273,7 @@ public:
         return num_keys - 3;
     }
     
-    int highest_index()
+    int highest_index() const
     {
         long num_keys;
         c74::max::t_symbol** keys = nullptr;
@@ -288,8 +287,8 @@ public:
             
             if (key == k_sym_name || key == k_sym_type || key == k_sym_width)
                 continue;
-            
-            int key_value = std::stoi(key);
+
+            const int key_value = std::stoi(key);
             
             if (key_value > highest_key)
                 highest_key = key_value;

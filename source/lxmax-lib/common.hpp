@@ -38,4 +38,12 @@ namespace lxmax
 	using clock = std::chrono::high_resolution_clock;
 	using timestamp = clock::time_point;
 	using std::chrono::milliseconds;
+
+	enum class dmx_protocol
+	{
+		none,
+		artnet,
+		sacn
+	};
+
 }

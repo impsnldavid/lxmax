@@ -23,7 +23,7 @@
 
 namespace lxmax
 {
-	struct dmx_output_universe_config
+	struct dmx_input_universe_config
 	{
 		dmx_protocol protocol;
 
@@ -35,7 +35,7 @@ namespace lxmax
 		Poco::Net::IPAddress send_address;
 	};
 
-    class dmx_output_service
+    class dmx_input_service
     {
 		const milliseconds k_full_update_interval { 1000 };
 
@@ -49,7 +49,7 @@ namespace lxmax
 		universe_updated_set _updated_universes;
 
     	std::mutex _config_mutex;
-		std::vector<dmx_output_universe_config> _configs;
+		std::vector<dmx_input_universe_config> _configs;
 
 		const std::string _system_name;
 		const Poco::UUID _system_id;
@@ -62,17 +62,17 @@ namespace lxmax
 		
 
     public:
-		dmx_output_service()
+		dmx_input_service()
 			: _system_name(Poco::Environment::nodeName()),
 			_system_id(Poco::UUIDGenerator::defaultGenerator().createFromName(Poco::UUID(), _system_name))
 		{
 			Poco::Net::initializeNetwork();
 
-			_socket.bind(Poco::Net::SocketAddress(Poco::Net::IPAddress("0.0.0.0"), 0));
+			_socket.bind(Poco::Net::SocketAddress(Poco::Net::IPAddress("0.0.0.0"), k_artnet_port));
 			_socket.setBroadcast(true);
 			
-			_multicast_socket.bind(Poco::Net::SocketAddress(Poco::Net::IPAddress("0.0.0.0"), 0));
-			_multicast_socket.setInterface(Poco::Net::NetworkInterface::forAddress(Poco::Net::IPAddress("10.211.55.5")));
+			_multicast_socket.bind(Poco::Net::SocketAddress(Poco::Net::IPAddress("0.0.0.0"), k_sacn_port));
+			_multicast_socket.setInterface(Poco::Net::NetworkInterface::forIndex(1));
 			_multicast_socket.setLoopback(true);
 
 			_universe_buffers.insert(universe_buffer_map_entry(universe_address(1), universe_buffer()));
@@ -80,7 +80,7 @@ namespace lxmax
 
 		void start()
 		{
-			_timer.start(Poco::TimerCallback<dmx_output_service>(*this, &dmx_output_service::on_timer));
+			_timer.start(Poco::TimerCallback<dmx_input_service>(*this, &dmx_input_service::on_timer));
 			_isRunning = true;
 		}
 
@@ -90,14 +90,19 @@ namespace lxmax
 			_isRunning = false;
 		}
 
-    	void update_configs(const std::vector<dmx_output_universe_config>& configs)
+    	void update_configs(const std::vector<dmx_input_universe_config>& configs)
 		{
 			std::lock_guard<std::mutex> lock(_config_mutex);
+
+			update_multicast_groups(_configs, configs);
     
 			_configs = configs;
 		}
 
     private:
     	void on_timer(Poco::Timer& timer);
+
+		void update_multicast_groups(const std::vector<dmx_input_universe_config>& old_configs,
+		                             const std::vector<dmx_input_universe_config>& new_configs);
     };
 }

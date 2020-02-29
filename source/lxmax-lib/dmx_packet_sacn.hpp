@@ -21,7 +21,27 @@ namespace lxmax
 	const uint8_t k_sacn_id[] { 0x41, 0x53, 0x43, 0x2d, 0x45, 0x31, 0x2e, 0x31, 0x37, 0x00, 0x00, 0x00 };
 
 	const uint16_t k_sacn_root_preamble_length = 0x0010;
-	const uint16_t k_sacn_root_postmble_length = 0x0010;
+	const uint16_t k_sacn_root_postamble_length = 0x0010;
+
+	const uint8_t k_sacn_address_data_type = 0xa1;
+
+	enum class sacn_root_vector : uint32_t
+	{
+		e131_data = 0x00000004,
+		e131_extended = 0x00000008
+	};
+
+	enum class sacn_e131_vector : uint32_t
+	{
+		data_packet = 0x00000002
+	};
+
+	enum class sacn_dmp_vector : uint8_t
+	{
+		set_property = 0x02
+	};
+
+
 
 	inline Poco::Net::IPAddress get_sacn_multicast_address(const universe_address& address)
 	{
@@ -60,9 +80,18 @@ namespace lxmax
 		uint8_t dmp_vector;
 		uint8_t address_data_type;
 		uint16_t_be first_property_address;
-		uint16_t_be data_length;
+		uint16_t_be address_increment;
+		uint16_t_be property_value_count;
 
 		sacn_dmx_header()
+			: root_preamble_length(k_sacn_root_preamble_length),
+			root_postamble_length(k_sacn_root_postamble_length),
+			root_vector(static_cast<uint32_t>(sacn_root_vector::e131_data)),
+			framing_vector(static_cast<uint32_t>(sacn_e131_vector::data_packet)),
+			dmp_vector(static_cast<uint8_t>(sacn_dmp_vector::set_property)),
+			address_data_type(k_sacn_address_data_type),
+			first_property_address(0x0000),
+			address_increment(0x0001)
 		{
 			memcpy(id, k_sacn_id,sizeof(id));
 		}
@@ -83,7 +112,7 @@ namespace lxmax
 		{
 			system_id.copyTo(reinterpret_cast<char*>(header.cid));
 
-			header.data_length = k_universe_length + 1;
+			header.dmp_flags_length = k_universe_length + 1;
 
 			strcpy_s(header.source_name, sizeof(header.source_name), source_name.c_str());
 
@@ -109,7 +138,7 @@ namespace lxmax
 					return false;
 			}
 
-			const uint16_t dmx_length = packet.header.data_length;
+			const uint16_t dmx_length = packet.header.dmp_flags_length;
 
 			if (dmx_length < 1 || dmx_length > 513)
 				return false;

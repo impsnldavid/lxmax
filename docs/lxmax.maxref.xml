@@ -67,8 +67,10 @@
 	<!--RELATED-->
 
 	<seealsolist>
+		<seealso name='lx.config' />
 		<seealso name='lx.dimmer' />
 		<seealso name='lx.colorfixture' />
+		<seealso name='lx.dmxwrite' />
 	</seealsolist>
 
 

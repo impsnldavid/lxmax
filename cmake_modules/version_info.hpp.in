@@ -1,0 +1,26 @@
+/// @file
+/// @ingroup	lxmax
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
+/// @license	Use of this source code is governed by the MIT License found in the License.md file.
+
+#pragma once
+
+#include <string>
+
+namespace lxmax
+{
+	const std::string GIT_VERSION_STR = "@VERSION@";
+	const std::string GIT_VERSION_SHORT_STR = "@VERSION_SHORT@";
+	const int GIT_VERSION_MAJOR = @VERSION_MAJOR@;
+	const std::string GIT_VERSION_MAJOR_STR = "@VERSION_MAJOR@";
+	const int GIT_VERSION_MINOR = @VERSION_MINOR@;
+	const std::string GIT_VERSION_MINOR_STR = "@VERSION_MINOR@";
+	const int GIT_VERSION_BUFGIX = @VERSION_BUGFIX@;
+	const std::string GIT_VERSION_BUFGIX_STR = "@VERSION_BUGFIX@";
+	const std::string GIT_VERSION_SHA1_STR = "@VERSION_SHA1@";
+	
+	const std::string VERSION_COMPANY_STR = "David Butler Design";
+	const std::string VERSION_COPYRIGHT_STR = "Copyright (C) 2020 David Butler";
+	const std::string VERSION_URL_STR = "http://www.davidbutlerdesign.co.uk";
+}
+

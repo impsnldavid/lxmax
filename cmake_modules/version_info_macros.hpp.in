@@ -1,0 +1,22 @@
+/// @file
+/// @ingroup	lxmax
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
+/// @license	Use of this source code is governed by the MIT License found in the License.md file.
+
+#pragma once
+
+#define GIT_VERSION_STR "@VERSION@"
+#define GIT_VERSION_SHORT_STR "@VERSION_SHORT@"
+#define GIT_VERSION_MAJOR @VERSION_MAJOR@
+#define GIT_VERSION_MAJOR_STR "@VERSION_MAJOR@"
+#define GIT_VERSION_MINOR @VERSION_MINOR@
+#define GIT_VERSION_MINOR_STR "@VERSION_MINOR@"
+#define GIT_VERSION_BUGFIX @VERSION_BUGFIX@
+#define GIT_VERSION_BUGFIX_STR "@VERSION_BUGFIX@"
+#define GIT_VERSION_SHA1_STR "@VERSION_SHA1@"
+
+#define GIT_FILE_VERSION GIT_VERSION_MAJOR, GIT_VERSION_MINOR, GIT_VERSION_BUGFIX, 0
+
+#define VERSION_COMPANY_STR "David Butler Design"
+#define VERSION_COPYRIGHT_STR "Copyright (C) 2020 David Butler"
+#define VERSION_URL_STR "http://www.davidbutlerdesign.co.uk";

@@ -1,3 +1,6 @@
+# Copyright 2020 David Butler. All rights reserved.
+# Use of this source code is governed by the MIT License found in the LICENSE file.
+
 cmake_minimum_required(VERSION 3.0)
 
 if (WIN32)
@@ -26,6 +29,7 @@ set( HEADER_FILES
 	fixture.hpp
 	fixture_manager.hpp
 	fixture_patch_info.hpp
+	hash_functions.hpp
 )
 
 set( SOURCE_FILES
