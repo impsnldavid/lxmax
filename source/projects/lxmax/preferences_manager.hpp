@@ -10,6 +10,7 @@
 
 #include "c74_min.h"
 #include "version_info.hpp"
+#include "dmx_universe_config.hpp"
 
 class preferences_manager
 {
@@ -24,6 +25,7 @@ class preferences_manager
 	const c74::min::symbol k_sym_global_preferences{"global_preferences"};
 	const c74::min::symbol k_sym_universes{"universes"};
 
+public:
 	void create_default()
 	{
 		_preferences.clear();
@@ -50,6 +52,8 @@ class preferences_manager
 		c74::min::dict universes;
 
 		_preferences[k_sym_universes] = universes;
+
+		write_to_disk();
 	}
 
 	void read_from_disk()
@@ -118,4 +122,22 @@ class preferences_manager
         c74::max::preferences_path(nullptr, true, &pref_path);
         c74::max::dictionary_write(_preferences, (char*)k_preferences_filename, pref_path);
 	}
+
+	void update_universes_editor(dict_edit& editor)
+	{
+		
+	}
+
+	void add_universe(lxmax::dmx_output_universe_config& config)
+	{
+		
+	}
+
+
+
+
+
+
+
+
 };

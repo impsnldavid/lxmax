@@ -29,11 +29,6 @@
 
 	<methodlist>
 
-		<method name='quickpatch'>
-			<digest>Quickly add a number of universes to the configuration </digest>
-			<description>Quickly add a number of universes to the configuration </description>
-		</method>
-
 		<method name='add_universe'>
 			<digest>Adds a universe to the configuration </digest>
 			<description>Adds a universe to the configuration </description>
@@ -52,6 +47,11 @@
 		<method name='remove_universe'>
 			<digest>Removes a universe from the configuration </digest>
 			<description>Removes a universe from the configuration </description>
+		</method>
+
+		<method name='quick_patch'>
+			<digest>Quickly add a number of universes to the configuration </digest>
+			<description>Quickly add a number of universes to the configuration </description>
 		</method>
 
 	</methodlist>

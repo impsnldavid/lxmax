@@ -109,7 +109,7 @@ public:
 		return _range_min;
 	}
 
-	int range_max() const
+    int range_max() const
 	{
 		return _range_max;
 	}
@@ -186,39 +186,6 @@ public:
         initialize();
 	}
     
-    void read_from_max_preferences(const std::string& filename)
-    {
-        _dictionary.clear();
-        
-        short pref_path;
-        c74::max::preferences_path(nullptr, true, &pref_path);
-         
-        c74::max::t_dictionary* d;
-        c74::max::dictionary_read((char*)filename.c_str(), pref_path, &d);
-        
-        if (d != nullptr)
-        {
-	        const c74::min::dict to_import { d };
-            _dictionary.copyunique(to_import);
-        }
-        
-        initialize();
-    }
-    
-    void write_to_max_preferences(const std::string& filename) const
-    {
-        c74::min::dict output;
-        output.copyunique(_dictionary);
-        
-        c74::max::dictionary_deleteentry(output, k_sym_name);
-        c74::max::dictionary_deleteentry(output, k_sym_type);
-        c74::max::dictionary_deleteentry(output, k_sym_width);
-        
-        short pref_path;
-        c74::max::preferences_path(nullptr, true, &pref_path);
-        c74::max::dictionary_write(output, (char*)filename.c_str(), pref_path);
-    }
-    
     void add_entry(int index, const c74::min::atoms& atoms)
     {
         std::vector<c74::max::t_atom> argv;
@@ -226,8 +193,8 @@ public:
         
         std::for_each(std::begin(atoms), std::end(atoms),
                       [&](const c74::min::atom& a) { argv.push_back(a); });
-        
-        auto array = c74::max::atomarray_new(argv.size(), argv.data());
+
+        const auto array = c74::max::atomarray_new(argv.size(), argv.data());
         
         c74::max::dictionary_appendobject(_dictionary, c74::min::symbol(index), array);
     }
@@ -272,8 +239,8 @@ public:
         
         return num_keys - 3;
     }
-    
-    int highest_index() const
+
+	int highest_index() const
     {
         long num_keys;
         c74::max::t_symbol** keys = nullptr;

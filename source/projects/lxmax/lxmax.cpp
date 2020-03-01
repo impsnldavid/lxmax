@@ -39,21 +39,16 @@ class lxmax_service : public object<lxmax_service>
 		{"Settings", 200, column_type::_static}
 	};
 
-	dict_edit _preferences{k_universes_dict_name, k_editor_columns};
+	dict_edit _universes_edit{k_universes_dict_name, k_editor_columns};
 	void* _registered_obj = nullptr;
-	
+
+	preferences_manager _preferences_manager;
 	lxmax::dmx_output_service _dmx_output_service;
-
 	lxmax::fixture_manager _fixture_manager;
-
-	void write_preferences()
-	{
-		_preferences.write_to_max_preferences(k_preferences_filename);
-	}
 
 	void update_dmx_service_config()
 	{
-		auto entries = _preferences.get_entries();
+		auto entries = _universes_edit.get_entries();
 
 		std::vector<lxmax::dmx_output_universe_config> output_configs;
 
@@ -97,7 +92,7 @@ class lxmax_service : public object<lxmax_service>
 
 		_dmx_output_service.update_configs(output_configs);
 
-		write_preferences();
+		_preferences_manager.write_to_disk();
 	}
 
 public:
@@ -110,11 +105,11 @@ public:
 
 	lxmax_service(const atoms& args = {})
 	{
-		_preferences.read_from_max_preferences(k_preferences_filename);
+		_preferences_manager.read_from_disk();
 
 		_registered_obj = c74::max::object_register(k_lxmax_namespace, k_lxmax_service_registration, this->maxobj());
 
-		c74::max::object_attach_byptr_register(maxobj(), _preferences, k_sym_box);
+		c74::max::object_attach_byptr_register(maxobj(), _universes_edit, k_sym_box);
 
 		update_dmx_service_config();
 
@@ -125,9 +120,9 @@ public:
 	{
 		_dmx_output_service.stop();
 
-		c74::max::object_detach_byptr(maxobj(), _preferences);
+		c74::max::object_detach_byptr(maxobj(), _universes_edit);
 
-		write_preferences();
+		_preferences_manager.write_to_disk();
 
 		if (_registered_obj != nullptr)
 			c74::max::object_unregister(_registered_obj);
@@ -137,11 +132,11 @@ public:
 		this, "add_universe", "Adds a universe to the configuration",
 		MIN_FUNCTION
 		{
-			const auto entries = _preferences.get_entries();
+			const auto entries = _universes_edit.get_entries();
 
 			if (entries.empty())
 			{
-				_preferences.add_entry(1, {"Universe 1", "Output", 1, "sACN", 1, 1, "[prefs]"});
+				_universes_edit.add_entry(1, {"Universe 1", "Output", 1, "sACN", 1, 1, "[prefs]"});
 			}
 			else
 			{
@@ -150,7 +145,7 @@ public:
 				const int internal_universe = entries.rbegin()->second[4];
 				const int protocol_universe = entries.rbegin()->second[5];
 
-				_preferences.add_entry(entries.rbegin()->first + 1,
+				_universes_edit.add_entry(entries.rbegin()->first + 1,
 				                       {
 					                       "Universe " + std::to_string(internal_universe + 1),
 					                       type, 1, protocol, internal_universe + 1, protocol_universe + 1, "[prefs]"
@@ -168,7 +163,7 @@ public:
 		MIN_FUNCTION
 		{
 			const int index = args[0];
-			_preferences.remove_entry(index);
+			_universes_edit.remove_entry(index);
 
 			update_dmx_service_config();
 
@@ -180,7 +175,7 @@ public:
 		this, "clear_universes", "Removes all universes from the configuration",
 		MIN_FUNCTION
 		{
-			_preferences.clear_entries();
+			_universes_edit.clear_entries();
 
 			update_dmx_service_config();
 
@@ -215,16 +210,16 @@ public:
 				return {};
 
 			if (should_clear_config)
-				_preferences.clear_entries();
+				_universes_edit.clear_entries();
 
-			int index = _preferences.highest_index() + 1;
+			int index = _universes_edit.highest_index() + 1;
 
 			for (int i = 0; i < patch_count; ++i)
 			{
 				if (start_internal_universe + i > lxmax::k_universe_max)
 					break;
 
-				_preferences.add_entry(index++, {
+				_universes_edit.add_entry(index++, {
 					                       "Universe " + std::to_string(start_internal_universe + i),
 					                       type, start_internal_universe + i, protocol, start_internal_universe + i,
 					                       start_protocol_universe + i, "[prefs]"
@@ -252,7 +247,7 @@ public:
 			notification n{args};
 			symbol attr_name{n.attr_name()};
 
-			if (n.source() == _preferences && n.name() == k_sym_modified)
+			if (n.source() == _universes_edit && n.name() == k_sym_modified)
 			{
 				update_dmx_service_config();
 			}

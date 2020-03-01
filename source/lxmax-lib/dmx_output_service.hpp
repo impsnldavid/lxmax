@@ -18,23 +18,11 @@
 #include "hash_functions.hpp"
 #include "dmx_packet_artnet.hpp"
 #include "dmx_packet_sacn.hpp"
-
+#include "dmx_universe_config.hpp"
 
 
 namespace lxmax
 {
-	struct dmx_output_universe_config
-	{
-		dmx_protocol protocol;
-
-		universe_address internal_universe;
-		universe_address protocol_universe;
-		universe_address sync_address;
-		int priority;
-
-		Poco::Net::IPAddress send_address;
-	};
-
     class dmx_output_service
     {
 		const milliseconds k_full_update_interval { 1000 };
@@ -72,7 +60,7 @@ namespace lxmax
 			_socket.setBroadcast(true);
 			
 			_multicast_socket.bind(Poco::Net::SocketAddress(Poco::Net::IPAddress("0.0.0.0"), 0));
-			_multicast_socket.setInterface(Poco::Net::NetworkInterface::forAddress(Poco::Net::IPAddress("10.211.55.5")));
+			//_multicast_socket.setInterface(Poco::Net::NetworkInterface::forAddress(Poco::Net::IPAddress("10.211.55.5")));
 			_multicast_socket.setLoopback(true);
 
 			_universe_buffers.insert(universe_buffer_map_entry(universe_address(1), universe_buffer()));

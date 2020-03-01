@@ -9,8 +9,8 @@ namespace lxmax
 {
 	void dmx_output_service::on_timer(Poco::Timer& timer)
 	{
-		// TODO: Calculate full update time per universe, and implement separate update behaviours for art-net and sacn
-
+		// TODO: Calculate full update time per universe
+		
 		bool is_full_update = false;
 
 		const auto time_now = clock::now();
