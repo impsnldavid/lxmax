@@ -80,7 +80,6 @@ class lxmax_service : public object<lxmax_service>
 
 				config.internal_universe = internal_universe;
 				config.protocol_universe = protocol_universe;
-				config.send_address = Poco::Net::IPAddress("127.0.0.1");
 
 				output_configs.push_back(config);
 			}

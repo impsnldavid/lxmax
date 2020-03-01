@@ -29,19 +29,14 @@
 
 	<methodlist>
 
-		<method name='add_universe'>
-			<digest>Adds a universe to the configuration </digest>
-			<description>Adds a universe to the configuration </description>
-		</method>
-
-		<method name='get_fixture_manager'>
-			<digest>Gets a pointer to the fixture manager </digest>
-			<description>Gets a pointer to the fixture manager </description>
-		</method>
-
 		<method name='clear_universes'>
 			<digest>Removes all universes from the configuration </digest>
 			<description>Removes all universes from the configuration </description>
+		</method>
+
+		<method name='quick_patch'>
+			<digest>Quickly add a number of universes to the configuration </digest>
+			<description>Quickly add a number of universes to the configuration </description>
 		</method>
 
 		<method name='remove_universe'>
@@ -49,9 +44,14 @@
 			<description>Removes a universe from the configuration </description>
 		</method>
 
-		<method name='quick_patch'>
-			<digest>Quickly add a number of universes to the configuration </digest>
-			<description>Quickly add a number of universes to the configuration </description>
+		<method name='get_fixture_manager'>
+			<digest>Gets a pointer to the fixture manager </digest>
+			<description>Gets a pointer to the fixture manager </description>
+		</method>
+
+		<method name='add_universe'>
+			<digest>Adds a universe to the configuration </digest>
+			<description>Adds a universe to the configuration </description>
 		</method>
 
 	</methodlist>

@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <string.h>
 #include <Poco/UUID.h>
 #include <Poco/Net/IPAddress.h>
 
@@ -114,7 +115,7 @@ namespace lxmax
 
 			header.dmp_flags_length = k_universe_length + 1;
 
-			strcpy_s(header.source_name, sizeof(header.source_name), source_name.c_str());
+			strncpy(header.source_name, source_name.c_str(), sizeof(header.source_name));
 
 			header.priority = priority;
 			header.sync_address = sync_address;

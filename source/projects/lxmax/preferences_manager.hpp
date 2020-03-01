@@ -6,7 +6,7 @@
 #pragma once
 
 #include <string>
-#include <filesystem>
+#include <Poco/File.h>
 
 #include "c74_min.h"
 #include "version_info.hpp"
@@ -64,7 +64,8 @@ public:
 		char file_path[MAX_PATH_CHARS];
 		c74::max::path_toabsolutesystempath(pref_path, k_preferences_filename, file_path);
 
-		if (!std::filesystem::exists(file_path))
+        Poco::File file(file_path);
+		if (!file.exists())
 		{
 			create_default();
 			return;

@@ -58,8 +58,11 @@ namespace lxmax
 					dmx_packet_artnet packet(config.protocol_universe, _artnet_sequence, it->second);
 					const auto packet_buffer = packet.serialize();
 
-					Poco::Net::SocketAddress address{config.send_address, k_artnet_port};
-					_socket.sendTo(packet_buffer.data(), packet_buffer.size(), address);
+                    for(const auto& a : config.unicast_addresses)
+                    {
+                        Poco::Net::SocketAddress address {a, k_artnet_port};
+                        _socket.sendTo(packet_buffer.data(), packet_buffer.size(), address);
+                    }
 				}
 				break;
 

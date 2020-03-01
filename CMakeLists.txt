@@ -27,6 +27,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/version_info_macros.hpp
 				
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/version_info)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (${CMAKE_GENERATOR} MATCHES "Xcode")
  		if (${XCODE_VERSION} VERSION_LESS 9)

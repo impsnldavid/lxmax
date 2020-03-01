@@ -8,6 +8,7 @@
 #include <cassert>
 #include <unordered_map>
 #include <mutex>
+#include <vector>
 #include "common.hpp"
 #include "fixture_patch_info.hpp"
 
