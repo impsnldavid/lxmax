@@ -14,7 +14,7 @@ namespace lxmax
 		bool is_full_update = false;
 
 		const auto time_now = clock::now();
-		if (time_now - _last_full_update_time > k_full_update_interval)
+		if (_global_config.is_force_output_at_framerate || time_now - _last_full_update_time > k_full_update_interval)
 		{
 			is_full_update = true;
 			_last_full_update_time = time_now;
@@ -49,6 +49,9 @@ namespace lxmax
 			{
 			case dmx_protocol::artnet:
 				{
+					if (!_artnet_socket)
+						continue;
+					
 					if (!is_artnet_sequence_increased)
 					{
 						_artnet_sequence = _artnet_sequence >= 255 ? 1 : _artnet_sequence + 1;
@@ -58,16 +61,46 @@ namespace lxmax
 					dmx_packet_artnet packet(config.protocol_universe, _artnet_sequence, it->second);
 					const auto packet_buffer = packet.serialize();
 
-                    for(const auto& a : config.unicast_addresses)
-                    {
-                        Poco::Net::SocketAddress address {a, k_artnet_port};
-                        _socket.sendTo(packet_buffer.data(), packet_buffer.size(), address);
-                    }
+					if (config.is_use_global_destination)
+					{
+						if (_global_config.is_artnet_global_destination_broadcast)
+						{
+							Poco::Net::SocketAddress address { k_artnet_broadcast_address, k_artnet_port };
+		                    _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+						}
+						else
+						{
+							for(const auto& a : _global_config.artnet_global_destination_unicast_addresses)
+		                    {
+		                        Poco::Net::SocketAddress address { a, k_artnet_port };
+		                        _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+		                    }
+						}
+					}
+					else
+					{
+						if (config.is_broadcast_or_multicast)
+						{
+							Poco::Net::SocketAddress address { k_artnet_broadcast_address, k_artnet_port };
+		                    _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+						}
+						else
+						{
+							for(const auto& a : config.unicast_addresses)
+		                    {
+		                        Poco::Net::SocketAddress address { a, k_artnet_port };
+		                        _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+		                    }
+						}
+					}
 				}
 				break;
 
 			case dmx_protocol::sacn:
 				{
+					if (!_sacn_socket)
+						continue;
+					
 					if (!is_sacn_sequence_increased)
 					{
 						_sacn_sequence = _sacn_sequence >= 255 ? 0 : _sacn_sequence + 1;
@@ -78,8 +111,38 @@ namespace lxmax
 					                       config.protocol_universe, _sacn_sequence, it->second);
 					const auto packet_buffer = packet.serialize();
 
-					Poco::Net::SocketAddress address{get_sacn_multicast_address(config.protocol_universe), k_sacn_port};
-					_multicast_socket.sendTo(packet_buffer.data(), packet_buffer.size(), address);
+					if (config.is_use_global_destination)
+					{
+						if (_global_config.is_sacn_global_destination_multicast)
+						{
+							Poco::Net::SocketAddress address { get_sacn_multicast_address(config.protocol_universe), k_sacn_port };
+		                    _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+						}
+						else
+						{
+							for(const auto& a : _global_config.sacn_global_destination_unicast_addresses)
+		                    {
+		                        Poco::Net::SocketAddress address { a, k_sacn_port };
+		                        _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+		                    }
+						}
+					}
+					else
+					{
+						if (config.is_broadcast_or_multicast)
+						{
+							Poco::Net::SocketAddress address { get_sacn_multicast_address(config.protocol_universe), k_sacn_port };
+		                    _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+						}
+						else
+						{
+							for(const auto& a : config.unicast_addresses)
+		                    {
+		                        Poco::Net::SocketAddress address { a, k_sacn_port };
+		                        _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+		                    }
+						}
+					}
 				}
 				break;
 

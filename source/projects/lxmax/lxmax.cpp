@@ -89,7 +89,7 @@ class lxmax_service : public object<lxmax_service>
 			}
 		}
 
-		_dmx_output_service.update_configs(output_configs);
+		_dmx_output_service.update_universe_configs(output_configs);
 
 		_preferences_manager.write_to_disk();
 	}
@@ -103,12 +103,13 @@ public:
 	MIN_FLAGS{behavior_flags::nobox};
 
 	lxmax_service(const atoms& args = {})
+		: _preferences_manager(k_preferences_filename)
 	{
 		_preferences_manager.read_from_disk();
 
-		_registered_obj = c74::max::object_register(k_lxmax_namespace, k_lxmax_service_registration, this->maxobj());
+		_registered_obj = object_register(k_lxmax_namespace, k_lxmax_service_registration, this->maxobj());
 
-		c74::max::object_attach_byptr_register(maxobj(), _universes_edit, k_sym_box);
+		object_attach_byptr_register(maxobj(), _universes_edit, k_sym_box);
 
 		update_dmx_service_config();
 
@@ -119,7 +120,7 @@ public:
 	{
 		_dmx_output_service.stop();
 
-		c74::max::object_detach_byptr(maxobj(), _universes_edit);
+		object_detach_byptr(maxobj(), _universes_edit);
 
 		_preferences_manager.write_to_disk();
 

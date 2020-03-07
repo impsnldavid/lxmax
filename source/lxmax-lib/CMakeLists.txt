@@ -19,6 +19,7 @@ project(lxmax-lib)
 
 set( HEADER_FILES
 	dmx_channel_range.hpp
+	dmx_universe_config.hpp
 	color_component.hpp
 	color_personality.hpp
 	common.hpp
@@ -29,6 +30,7 @@ set( HEADER_FILES
 	fixture.hpp
 	fixture_manager.hpp
 	fixture_patch_info.hpp
+	global_config.hpp
 	hash_functions.hpp
 )
 

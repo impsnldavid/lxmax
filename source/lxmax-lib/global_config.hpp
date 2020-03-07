@@ -9,21 +9,30 @@
 #include <vector>
 #include <Poco/Net/IPAddress.h>
 
+#define MEMBER_WITH_KEY(type, name, default_value) static const inline std::string key_##name = #name;\
+							  type name = default_value;  
+
 namespace lxmax
 {
 	struct global_config
 	{
-		bool is_output_empty_universes;
-		bool is_fixed_framerate_enabled;
-		int fixed_framerate;
-		bool is_allow_nondmx_fixed_framerate;
-		
-		Poco::Net::IPAddress art_net_network_adapter;
-		bool artnet_global_destination_broadcast;
-		std::vector<Poco::Net::IPAddress> artnet_global_destination_unicast_addresses;
+		global_config() = default;
 
-		Poco::Net::IPAddress sacn_network_adapter;
-		bool sacn_global_desination_multicast;
-		std::vector<Poco::Net::IPAddress> sacn_global_destination_unicast_addresses;
+		MEMBER_WITH_KEY(bool, is_output_empty_universes, false)
+		MEMBER_WITH_KEY(bool, is_force_output_at_framerate, false)
+		MEMBER_WITH_KEY(int, framerate, 44)
+		MEMBER_WITH_KEY(bool, is_allow_nondmx_framerate, false)
+
+		MEMBER_WITH_KEY(Poco::Net::IPAddress, artnet_network_adapter, Poco::Net::IPAddress("0.0.0.0"))
+		MEMBER_WITH_KEY(bool, is_artnet_global_destination_broadcast, false);
+		MEMBER_WITH_KEY(std::vector<Poco::Net::IPAddress>, artnet_global_destination_unicast_addresses, { })
+		MEMBER_WITH_KEY(bool, is_send_artnet_sync_packets, true)
+
+		MEMBER_WITH_KEY(Poco::Net::IPAddress, sacn_network_adapter, Poco::Net::IPAddress("0.0.0.0"))
+		MEMBER_WITH_KEY(bool, is_sacn_global_destination_multicast, true)
+		MEMBER_WITH_KEY(std::vector<Poco::Net::IPAddress>, sacn_global_destination_unicast_addresses, { })
+		MEMBER_WITH_KEY(bool, is_send_sacn_sync_packets, true)
 	};
 }
+
+#undef MEMBER_WITH_KEY
