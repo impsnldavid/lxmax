@@ -11,6 +11,7 @@
 #include <vector>
 #include <mutex>
 #include <memory>
+#include <Poco/Logger.h>
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/MulticastSocket.h>
 #include <Poco/Timer.h>
@@ -33,6 +34,8 @@ namespace lxmax
 		const Poco::Net::IPAddress k_artnet_broadcast_address{"2.255.255.255"};
 		const Poco::Net::IPAddress k_artnet_alt_broadcast_address{"10.255.255.255"};
 
+		Poco::Logger& _log;
+		
 		global_config _global_config;
 
 		bool _isRunning{false};
@@ -57,8 +60,9 @@ namespace lxmax
 
 
 	public:
-		dmx_output_service()
-			: _system_name(Poco::Environment::nodeName()),
+		dmx_output_service(Poco::Logger& log)
+			: _log(log),
+			  _system_name(Poco::Environment::nodeName()),
 			  _system_id(Poco::UUIDGenerator::defaultGenerator().createFromName(Poco::UUID(), _system_name))
 		{
 			Poco::Net::initializeNetwork();
@@ -109,7 +113,8 @@ namespace lxmax
 				}
 				catch (const Poco::NotFoundException& ex)
 				{
-					// TODO: Log this to Max console
+					poco_warning(_log, "Failed to find network adapter with IP '%s' for Art-Net. Please select a new network adapter in LXMax preferences.", 
+						_global_config.artnet_network_adapter.toString());
 				}
 			}
 
@@ -125,7 +130,8 @@ namespace lxmax
 				}
 				catch (const Poco::NotFoundException& ex)
 				{
-					// TODO: Log this to Max console
+					poco_warning(_log, "Failed to find network adapter with IP '%s' for sACN. Please select a new network adapter in LXMax preferences.", 
+						_global_config.sacn_network_adapter.toString());
 				}
 			}
 

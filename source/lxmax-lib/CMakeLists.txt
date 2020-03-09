@@ -23,6 +23,7 @@ set( HEADER_FILES
 	color_component.hpp
 	color_personality.hpp
 	common.hpp
+	config_helpers.hpp
 	dmx_packet_artnet.hpp
 	dmx_packet_sacn.hpp
 	dmx_output_service.hpp
@@ -32,6 +33,7 @@ set( HEADER_FILES
 	fixture_patch_info.hpp
 	global_config.hpp
 	hash_functions.hpp
+	preferences_manager.hpp
 )
 
 set( SOURCE_FILES
@@ -47,5 +49,5 @@ add_library(
 target_include_directories(lxmax-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(lxmax-lib PUBLIC
-	CONAN_PKG::Poco
+	CONAN_PKG::poco
 )

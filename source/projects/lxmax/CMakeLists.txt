@@ -15,7 +15,7 @@ include_directories(
 
 set( HEADER_FILES
 	dict_edit.hpp
-	preferences_manager.hpp
+	max_console_channel.hpp
 )
 
 set( SOURCE_FILES

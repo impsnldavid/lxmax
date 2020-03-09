@@ -7,12 +7,15 @@
 #include "dmx_output_service.hpp"
 #include "fixture_manager.hpp"
 
+#include <Poco/Logger.h>
+
 #include "c74_min.h"
 #include "c74_min_flags.h"
 #include "common.hpp"
-#include "dict_edit.hpp"
-#include "preferences_manager.hpp"
 
+#include "dict_edit.hpp"
+#include "max_console_channel.hpp"
+#include "preferences_manager.hpp"
 
 
 using namespace c74::min;
@@ -42,7 +45,7 @@ class lxmax_service : public object<lxmax_service>
 	dict_edit _universes_edit{k_universes_dict_name, k_editor_columns};
 	void* _registered_obj = nullptr;
 
-	preferences_manager _preferences_manager;
+	lxmax::preferences_manager _preferences_manager;
 	lxmax::dmx_output_service _dmx_output_service;
 	lxmax::fixture_manager _fixture_manager;
 
@@ -90,8 +93,6 @@ class lxmax_service : public object<lxmax_service>
 		}
 
 		_dmx_output_service.update_universe_configs(output_configs);
-
-		_preferences_manager.write_to_disk();
 	}
 
 public:
@@ -103,9 +104,17 @@ public:
 	MIN_FLAGS{behavior_flags::nobox};
 
 	lxmax_service(const atoms& args = {})
-		: _preferences_manager(k_preferences_filename)
+		: _preferences_manager(Poco::Logger::get("Preferences Manager"), k_preferences_filename),
+		  _dmx_output_service(Poco::Logger::get("DMX Output Service"))
 	{
-		_preferences_manager.read_from_disk();
+		Poco::Logger::root().setChannel(new max_console_channel(this->maxobj()));
+#ifdef _DEBUG
+		Poco::Logger::root().setLevel(Poco::Message::Priority::PRIO_TRACE);
+#else
+		Poco::Logger::root().setLevel(Poco::Message::Priority::PRIO_INFORMATION);
+#endif
+		
+		_preferences_manager.load();
 
 		_registered_obj = object_register(k_lxmax_namespace, k_lxmax_service_registration, this->maxobj());
 
@@ -121,8 +130,6 @@ public:
 		_dmx_output_service.stop();
 
 		object_detach_byptr(maxobj(), _universes_edit);
-
-		_preferences_manager.write_to_disk();
 
 		if (_registered_obj != nullptr)
 			c74::max::object_unregister(_registered_obj);
@@ -146,10 +153,10 @@ public:
 				const int protocol_universe = entries.rbegin()->second[5];
 
 				_universes_edit.add_entry(entries.rbegin()->first + 1,
-				                       {
-					                       "Universe " + std::to_string(internal_universe + 1),
-					                       type, 1, protocol, internal_universe + 1, protocol_universe + 1, "[prefs]"
-				                       });
+				                          {
+					                          "Universe " + std::to_string(internal_universe + 1),
+					                          type, 1, protocol, internal_universe + 1, protocol_universe + 1, "[prefs]"
+				                          });
 			}
 
 			update_dmx_service_config();
@@ -220,10 +227,10 @@ public:
 					break;
 
 				_universes_edit.add_entry(index++, {
-					                       "Universe " + std::to_string(start_internal_universe + i),
-					                       type, start_internal_universe + i, protocol, start_internal_universe + i,
-					                       start_protocol_universe + i, "[prefs]"
-				                       });
+					                          "Universe " + std::to_string(start_internal_universe + i),
+					                          type, start_internal_universe + i, protocol, start_internal_universe + i,
+					                          start_protocol_universe + i, "[prefs]"
+				                          });
 			}
 
 			update_dmx_service_config();
@@ -232,7 +239,7 @@ public:
 		}
 	};
 
-	message<> get_fixture_manager {
+	message<> get_fixture_manager{
 		this, "get_fixture_manager", "Gets a pointer to the fixture manager",
 		MIN_FUNCTION
 		{
@@ -262,7 +269,8 @@ private:
 		MIN_FUNCTION
 		{
 #ifdef _DEBUG
-			cout << "LXMax " << lxmax::GIT_VERSION_STR << " - DEBUG BUILD - " << lxmax::VERSION_COPYRIGHT_STR << " - " << lxmax::VERSION_URL_STR << endl;
+			cout << "LXMax " << lxmax::GIT_VERSION_STR << " - DEBUG BUILD - " << lxmax::VERSION_COPYRIGHT_STR << " - "
+				<< lxmax::VERSION_URL_STR << endl;
 #else
 			cout << "LXMax " << lxmax::GIT_VERSION_STR << " - " << lxmax::VERSION_COPYRIGHT_STR << " - " << lxmax::VERSION_URL_STR << endl;
 #endif

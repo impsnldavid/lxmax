@@ -15,8 +15,8 @@ namespace lxmax
 	const std::string GIT_VERSION_MAJOR_STR = "@VERSION_MAJOR@";
 	const int GIT_VERSION_MINOR = @VERSION_MINOR@;
 	const std::string GIT_VERSION_MINOR_STR = "@VERSION_MINOR@";
-	const int GIT_VERSION_BUFGIX = @VERSION_BUGFIX@;
-	const std::string GIT_VERSION_BUFGIX_STR = "@VERSION_BUGFIX@";
+	const int GIT_VERSION_BUGFIX = @VERSION_BUGFIX@;
+	const std::string GIT_VERSION_BUGFIX_STR = "@VERSION_BUGFIX@";
 	const std::string GIT_VERSION_SHA1_STR = "@VERSION_SHA1@";
 	
 	const std::string VERSION_COMPANY_STR = "David Butler Design";

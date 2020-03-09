@@ -8,12 +8,11 @@ class LXMaxConan(ConanFile):
 	generators = "cmake_multi"
 	
 	requires = (
-		"Poco/1.9.4@pocoproject/stable"
+		"poco/1.10.1"
 		)
 		
 	default_options = (
-		"Poco:enable_xml=False", 
-		"Poco:enable_json=False",
+		"Poco:enable_xml=False",
 		"Poco:enable_mongodb=False",
 		"Poco:enable_netssl=False",
 		"Poco:enable_netssl_win=False", 
