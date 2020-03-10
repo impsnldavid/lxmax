@@ -161,7 +161,7 @@ public:
 
 	lx_dimmer(const atoms& args = {})
     {
-        _lxmax_service = (c74::max::t_object*)c74::max::object_findregistered(k_lxmax_namespace, k_lxmax_service_registration);
+        _lxmax_service = (c74::max::t_object*)c74::max::object_findregistered(k_sym_nobox, k_lxmax_service_registration);
         assert(_lxmax_service);
 
 		c74::max::t_object* obj = c74::max::object_method_direct_getobject(_lxmax_service, symbol("get_fixture_manager"));

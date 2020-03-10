@@ -23,6 +23,7 @@
 #include "dmx_packet_sacn.hpp"
 #include "dmx_universe_config.hpp"
 #include "global_config.hpp"
+#include "preferences_manager.hpp"
 
 
 namespace lxmax
@@ -82,11 +83,11 @@ namespace lxmax
 			_isRunning = false;
 		}
 
-		void update_global_config(const global_config& config)
+		void update_global_config(const void* pSender)
 		{
 			std::lock_guard<std::mutex> lock(_config_mutex);
 			
-			_global_config = config;
+			_global_config = reinterpret_cast<const preferences_manager*>(pSender)->get_global_config();
 
 			if (_sacn_socket)
 				_sacn_socket.reset();
@@ -141,11 +142,19 @@ namespace lxmax
 			_sacn_socket->setLoopback(true);
 		}
 		
-		void update_universe_configs(const std::vector<dmx_output_universe_config>& configs)
+		void update_universe_configs(const void* pSender)
 		{
 			std::lock_guard<std::mutex> lock(_config_mutex);
 
-			_configs = configs;
+			const auto& universes = reinterpret_cast<const preferences_manager*>(pSender)->get_universe_configs();
+
+			_configs.clear();
+			
+			for(const auto& u : universes)
+			{
+				if(u.second->is_enabled && u.second->universe_type() == dmx_universe_type::output)
+					_configs.push_back(*dynamic_cast<dmx_output_universe_config*>(u.second.get()));
+			}
 		}
 
 	private:

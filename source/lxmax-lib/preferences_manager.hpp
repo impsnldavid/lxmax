@@ -15,6 +15,7 @@
 #include <Poco/LineEndingConverter.h>
 #include <Poco/Util/JSONConfiguration.h>
 #include <Poco/NumberParser.h>
+#include <Poco/BasicEvent.h>
 
 #include "version_info.hpp"
 #include "global_config.hpp"
@@ -22,6 +23,8 @@
 
 namespace lxmax
 {
+	using dmx_universe_configs = std::map<int, std::unique_ptr<dmx_universe_config>>;
+	
 	class preferences_manager
 	{
 		const std::string k_lxmax_version_major{"lxmax_version_major"};
@@ -29,19 +32,20 @@ namespace lxmax
 		const std::string k_lxmax_version_bugfix{"lxmax_version_bugfix"};
 
 		const std::string k_global_preferences{"global_preferences"};
-		const std::string k_input_universes{"input_universes"};
-		const std::string k_output_universes{"output_universes"};
+		const std::string k_universes{"universes"};
 		
 		Poco::Logger& _log;
 		
 		const std::string _preferences_path;
 
 		global_config _global_config;
-		std::map<int, dmx_input_universe_config> _input_universe_configs;
-		std::map<int, dmx_output_universe_config> _output_universe_configs;
+		dmx_universe_configs _universe_configs;
 		
 		
 	public:
+		Poco::BasicEvent<void> global_config_changed;
+		Poco::BasicEvent<void> universe_config_changed;
+		
 		preferences_manager(Poco::Logger& log, std::string preferences_path)
 			: _log(log),
 			_preferences_path(std::move(preferences_path))
@@ -52,10 +56,11 @@ namespace lxmax
 		void create_default()
 		{
 			_global_config = { };
-			_input_universe_configs.clear();
-			_output_universe_configs.clear();
+			_universe_configs.clear();
 
 			save();
+			global_config_changed(this);
+			universe_config_changed(this);
 		}
 
 		void load()
@@ -88,10 +93,11 @@ namespace lxmax
 
 				_global_config.read_from_configuration(preferences.createView(k_global_preferences));
 
-				std::vector<std::string> input_universe_keys;
-				preferences.keys(k_input_universes, input_universe_keys);
+				std::vector<std::string> universe_keys;
+				auto universes_config = preferences.createView(k_universes);
+				universes_config->keys(universe_keys);
 
-				for(const auto& k : input_universe_keys)
+				for(const auto& k : universe_keys)
 				{
 					int index;
 					if (!Poco::NumberParser::tryParse(k, index))
@@ -100,28 +106,8 @@ namespace lxmax
 						continue;
 					}
 
-					dmx_input_universe_config config;
-					config.read_from_configuration(preferences.createView(k));
-
-					_input_universe_configs.insert(std::make_pair(index, config));
-				}
-
-				std::vector<std::string> output_universe_keys;
-				preferences.keys(k_output_universes, output_universe_keys);\
-
-				for(const auto& k : output_universe_keys)
-				{
-					int index;
-					if (!Poco::NumberParser::tryParse(k, index))
-					{
-						poco_error_f(_log, "Failed to parse output universe configuration key '%s'", k);
-						continue;
-					}
-
-					dmx_output_universe_config config;
-					config.read_from_configuration(preferences.createView(k));
-
-					_output_universe_configs.insert(std::make_pair(index, config));
+					std::unique_ptr<dmx_universe_config> config = dmx_universe_config::create_from_configuration(universes_config->createView(k));
+					_universe_configs.insert(std::make_pair(index, std::move(config)));
 				}
 			}
 			catch(const Poco::NotFoundException& ex)
@@ -142,6 +128,9 @@ namespace lxmax
 				
 				create_default();
 			}
+
+			global_config_changed(this);
+			universe_config_changed(this);
 		}
 		
 		void save()
@@ -155,18 +144,11 @@ namespace lxmax
 			auto global_preferences = preferences.createView(k_global_preferences);
 			_global_config.write_to_configuration(global_preferences);
 
-			auto input_universes_preferences = preferences.createView(k_input_universes);
-			for(const auto& pair : _input_universe_configs)
+			auto universe_preferences = preferences.createView(k_universes);
+			for(const auto& pair : _universe_configs)
 			{
-				auto p = input_universes_preferences->createView(std::to_string(pair.first));
-				pair.second.write_to_configuration(p);
-			}
-
-			auto output_universes_preferences = preferences.createView(k_output_universes);
-			for(const auto& pair : _output_universe_configs)
-			{
-				auto p = output_universes_preferences->createView(std::to_string(pair.first));
-				pair.second.write_to_configuration(p);
+				auto p = universe_preferences->createView(std::to_string(pair.first));
+				pair.second->write_to_configuration(p);
 			}
 
 			try
@@ -204,28 +186,40 @@ namespace lxmax
 		{
 			_global_config = std::move(config);
 			save();
+			global_config_changed(this);
 		}
 
-		const std::map<int, dmx_input_universe_config>& get_input_universes() const
+		const dmx_universe_configs& get_universe_configs() const
 		{
-			return _input_universe_configs;
+			return _universe_configs;
 		}
 
-		void set_input_universes(std::map<int, dmx_input_universe_config> configs)
+		void set_universes_configs(dmx_universe_configs configs)
 		{
-			_input_universe_configs = std::move(configs);
+			_universe_configs = std::move(configs);
 			save();
+			universe_config_changed(this);
 		}
 
-		const std::map<int, dmx_output_universe_config>& get_output_universes() const
+		void add_universe(int key, std::unique_ptr<dmx_universe_config> config)
 		{
-			return _output_universe_configs;
-		}
-
-		void set_output_universes(std::map<int, dmx_output_universe_config> configs)
-		{
-			_output_universe_configs = std::move(configs);
+			_universe_configs.insert_or_assign(key, std::move(config));
 			save();
+			universe_config_changed(this);
+		}
+
+		void remove_universe(int key)
+		{
+			_universe_configs.erase(key);
+			save();
+			universe_config_changed(this);
+		}
+
+		void clear_universes()
+		{
+			_universe_configs.clear();
+			save();
+			universe_config_changed(this);
 		}
 	};
 }

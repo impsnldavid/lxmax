@@ -8,6 +8,7 @@
 #include "fixture_manager.hpp"
 
 #include <Poco/Logger.h>
+#include <Poco/Delegate.h>
 
 #include "c74_min.h"
 #include "c74_min_flags.h"
@@ -25,177 +26,221 @@ void on_max_quit(void* a)
 	c74::max::object_free(a);
 }
 
-
 class lxmax_service : public object<lxmax_service>
 {
-	const string k_preferences_filename{"lxmaxpreferences.json"};
-	const string k_universes_dict_name{"___lxmax_universes"};
+	static const inline string k_preferences_filename { "lxmaxpreferences.json" };
+	static const inline string k_universes_dict_name { "___lxmax_universes" };
 
 	const vector<dict_edit_column> k_editor_columns
 	{
-		{"Label", 200, column_type::_text},
-		{"Type", 70, atoms{"Output", "Input"}},
-		{"On", 40, column_type::_toggle},
-		{"Protocol / Device", 155, atoms{"Art-Net", "sACN"}},
-		{"Internal Universe", 90, 1, 63999},
-		{"Protocol Universe", 90, 1, 63999},
-		{"Settings", 200, column_type::_static}
+		{ "Label", 200, column_type::_text },
+		{ "Type", 70, atoms { "Output", "Input" } },
+		{ "On", 40, column_type::_toggle },
+		{ "Protocol / Device", 155, atoms { "Art-Net", "sACN", "None" } },
+		{ "Internal Universe", 90, 1, 63999 },
+		{ "Protocol Universe", 90, 1, 63999 },
+		{ "Settings", 200, column_type::_static }
 	};
 
-	dict_edit _universes_edit{k_universes_dict_name, k_editor_columns};
+	dict_edit _universes_editor { k_universes_dict_name, k_editor_columns };
+	bool _is_ignore_editor_notifications { false };
 	void* _registered_obj = nullptr;
 
-	lxmax::preferences_manager _preferences_manager;
-	lxmax::dmx_output_service _dmx_output_service;
-	lxmax::fixture_manager _fixture_manager;
+	std::unique_ptr<lxmax::preferences_manager> _preferences_manager;
+	std::unique_ptr<lxmax::dmx_output_service> _dmx_output_service;
+	std::unique_ptr<lxmax::fixture_manager> _fixture_manager;
 
-	void update_dmx_service_config()
+	static std::string get_preference_path()
 	{
-		auto entries = _universes_edit.get_entries();
+		short pref_path;
+		c74::max::preferences_path(nullptr, true, &pref_path);
 
-		std::vector<lxmax::dmx_output_universe_config> output_configs;
+		char file_path[MAX_PATH_CHARS];
+		c74::max::path_toabsolutesystempath(pref_path, k_preferences_filename.c_str(), file_path);
 
-		for (auto entry : entries)
+		return file_path;
+	}
+
+	void update_editor_from_universes_config()
+	{
+		_is_ignore_editor_notifications = true;
+
+		_universes_editor.clear_entries();
+		
+		const auto& universes = _preferences_manager->get_universe_configs();
+
+		for(const auto& pair : universes)
 		{
-			std::string label = entry.second[0];
-			std::string type = entry.second[1];
-			const bool is_enabled = entry.second[2];
-			std::string protocol = entry.second[3];
-			const int internal_universe = entry.second[4];
-			const int protocol_universe = entry.second[5];
-
-			if (!is_enabled)
-				continue;
-
-			if (type == "Input")
+			const atoms a
 			{
-			}
-			else if (type == "Output")
-			{
-				lxmax::dmx_output_universe_config config;
-
-				if (protocol == "Art-Net")
-					config.protocol = lxmax::dmx_protocol::artnet;
-				else if (protocol == "sACN")
-					config.protocol = lxmax::dmx_protocol::sacn;
-				else
-					assert(false);
-
-				config.internal_universe = internal_universe;
-				config.protocol_universe = protocol_universe;
-
-				output_configs.push_back(config);
-			}
-			else
-			{
-				assert(false);
-			}
+				pair.second->label,
+				pair.second->universe_type(),
+				pair.second->is_enabled ? 1 : 0,
+				lxmax::dmx_protocol_to_string(pair.second->protocol),
+				pair.second->internal_universe,
+				pair.second->protocol_universe,
+				pair.second->summary()
+			};
+			
+			_universes_editor.add_entry(pair.first, a);
 		}
 
-		_dmx_output_service.update_universe_configs(output_configs);
+		_is_ignore_editor_notifications = false;
+	}
+
+	void update_dmx_universe_config_from_editor()
+	{
+		const auto& entries = _universes_editor.get_entries();
+		auto& configs = _preferences_manager->get_universe_configs();
+
+		for(const auto& e : entries)
+		{
+			auto config = configs.find(e.first);
+
+			if (config == std::end(configs))
+				continue;
+
+			const lxmax::dmx_universe_type universe_type = lxmax::dmx_universe_type_from_string(e.second[1]);
+			
+			if (config->second->universe_type() != universe_type)
+			{
+				_preferences_manager->remove_universe(e.first);
+
+				if (universe_type == lxmax::dmx_universe_type::input)
+					_preferences_manager->add_universe(e.first, std::make_unique<lxmax::dmx_input_universe_config>());
+				else
+					_preferences_manager->add_universe(e.first, std::make_unique<lxmax::dmx_output_universe_config>());
+
+				config = configs.find(e.first);
+				assert(config != std::end(configs));
+			}
+			
+			config->second->label = e.second[0];
+			config->second->is_enabled = e.second[2];
+			config->second->protocol = lxmax::dmx_protocol_from_string(e.second[3]);
+			config->second->internal_universe = e.second[4];
+			config->second->protocol_universe = e.second[5];
+		}
+
+		_preferences_manager->save();
 	}
 
 public:
-	MIN_DESCRIPTION{"LXMax service object."};
-	MIN_TAGS{"lxmax"};
-	MIN_AUTHOR{"David Butler / The Impersonal Stereo"};
-	MIN_RELATED{"lx.config, lx.dimmer, lx.colorfixture, lx.dmxwrite"};
+	MIN_DESCRIPTION { "LXMax service object." };
+	MIN_TAGS { "lxmax" };
+	MIN_AUTHOR { "David Butler / The Impersonal Stereo" };
+	MIN_RELATED { "lx.config, lx.dimmer, lx.colorfixture, lx.dmxwrite" };
 
-	MIN_FLAGS{behavior_flags::nobox};
+	MIN_FLAGS { behavior_flags::nobox };
 
-	lxmax_service(const atoms& args = {})
-		: _preferences_manager(Poco::Logger::get("Preferences Manager"), k_preferences_filename),
-		  _dmx_output_service(Poco::Logger::get("DMX Output Service"))
+	lxmax_service(const atoms& args = { })
 	{
-		Poco::Logger::root().setChannel(new max_console_channel(this->maxobj()));
-#ifdef _DEBUG
-		Poco::Logger::root().setLevel(Poco::Message::Priority::PRIO_TRACE);
-#else
-		Poco::Logger::root().setLevel(Poco::Message::Priority::PRIO_INFORMATION);
-#endif
+		if (!maxobj())
+			return;
 		
-		_preferences_manager.load();
+		Poco::Logger& root_logger = Poco::Logger::root();
+		root_logger.setChannel(Poco::AutoPtr<max_console_channel>(new max_console_channel(maxobj())));
+		
+#ifdef _DEBUG
+		root_logger.setLevel(Poco::Message::Priority::PRIO_TRACE);
+		root_logger.information("%s - DEBUG BUILD - %s - %s", 
+			lxmax::GIT_VERSION_STR, lxmax::VERSION_COPYRIGHT_STR, lxmax::VERSION_URL_STR);
+#else
+		root_logger.setLevel(Poco::Message::Priority::PRIO_INFORMATION);
+		root_logger.information("LXMax %s - %s - %s", 
+			lxmax::GIT_VERSION_STR, lxmax::VERSION_COPYRIGHT_STR, lxmax::VERSION_URL_STR);
+#endif
 
-		_registered_obj = object_register(k_lxmax_namespace, k_lxmax_service_registration, this->maxobj());
+		
+		_preferences_manager = std::make_unique<lxmax::preferences_manager>(Poco::Logger::get("Preferences Manager"), get_preference_path()),
+		_dmx_output_service = std::make_unique<lxmax::dmx_output_service>(Poco::Logger::get("DMX Output Service"));
+		_fixture_manager = std::make_unique<lxmax::fixture_manager>();
 
-		object_attach_byptr_register(maxobj(), _universes_edit, k_sym_box);
+		_preferences_manager->global_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_global_config);
+		_preferences_manager->universe_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_universe_configs);
+		
+		_preferences_manager->load();
 
-		update_dmx_service_config();
+		_registered_obj = object_register(k_sym_nobox, k_lxmax_service_registration, this->maxobj());
 
-		_dmx_output_service.start();
+		object_attach_byptr_register(maxobj(), _universes_editor, k_sym_box);
+
+		update_editor_from_universes_config();
+
+		_dmx_output_service->start();
 	}
 
 	~lxmax_service()
 	{
-		_dmx_output_service.stop();
+		if (_dmx_output_service)
+			_dmx_output_service->stop();
 
-		object_detach_byptr(maxobj(), _universes_edit);
+		object_detach_byptr(maxobj(), _universes_editor);
 
 		if (_registered_obj != nullptr)
 			c74::max::object_unregister(_registered_obj);
 	}
 
-	message<> add_universe{
+	message<> add_universe {
 		this, "add_universe", "Adds a universe to the configuration",
 		MIN_FUNCTION
 		{
-			const auto entries = _universes_edit.get_entries();
+			const auto& last_config = _preferences_manager->get_universe_configs().rbegin();
 
-			if (entries.empty())
+			if (last_config != std::rend(_preferences_manager->get_universe_configs()))
 			{
-				_universes_edit.add_entry(1, {"Universe 1", "Output", 1, "sACN", 1, 1, "[prefs]"});
+				std::unique_ptr<lxmax::dmx_universe_config> config = last_config->second->clone();
+				
+				config->internal_universe++;
+				config->protocol_universe++;
+				config->label = "Universe " + std::to_string(config->internal_universe);
+
+				_preferences_manager->add_universe(last_config->first + 1, std::move(config));
 			}
 			else
 			{
-				const std::string type = entries.rbegin()->second[1];
-				const std::string protocol = entries.rbegin()->second[3];
-				const int internal_universe = entries.rbegin()->second[4];
-				const int protocol_universe = entries.rbegin()->second[5];
-
-				_universes_edit.add_entry(entries.rbegin()->first + 1,
-				                          {
-					                          "Universe " + std::to_string(internal_universe + 1),
-					                          type, 1, protocol, internal_universe + 1, protocol_universe + 1, "[prefs]"
-				                          });
+				_preferences_manager->add_universe(1, std::make_unique<lxmax::dmx_output_universe_config>());
 			}
 
-			update_dmx_service_config();
-
-			return {};
+			update_editor_from_universes_config();
+			
+			return { };
 		}
 	};
 
-	message<> remove_universe{
+	message<> remove_universe {
 		this, "remove_universe", "Removes a universe from the configuration",
 		MIN_FUNCTION
 		{
 			const int index = args[0];
-			_universes_edit.remove_entry(index);
+			
+			if (_preferences_manager->get_universe_configs().find(index) != std::end(_preferences_manager->get_universe_configs()))
+				_preferences_manager->remove_universe(index);
 
-			update_dmx_service_config();
+			update_editor_from_universes_config();
 
-			return {};
+			return { };
 		}
 	};
 
-	message<> clear_universes{
+	message<> clear_universes {
 		this, "clear_universes", "Removes all universes from the configuration",
 		MIN_FUNCTION
 		{
-			_universes_edit.clear_entries();
+			_preferences_manager->clear_universes();
 
-			update_dmx_service_config();
+			update_editor_from_universes_config();
 
-			return {};
+			return { };
 		}
 	};
 
-	message<> quick_patch{
+	message<> quick_patch {
 		this, "quick_patch", "Quickly add a number of universes to the configuration",
 		MIN_FUNCTION
 		{
 			if (args.size() != 6)
-				return {};
+				return { };
 
 			const bool should_clear_config = args[0];
 			const int patch_count = args[1];
@@ -205,61 +250,59 @@ public:
 			const int start_protocol_universe = args[5];
 
 			if (patch_count < 1 || patch_count > 65535)
-				return {};
+				return { };
 
 			if (type != "Input" && type != "Output")
-				return {};
+				return { };
 
 			if (protocol != "Art-Net" && protocol != "sACN")
-				return {};
+				return { };
 
 			if (start_internal_universe < 1 || start_internal_universe > lxmax::k_universe_max)
-				return {};
+				return { };
 
 			if (should_clear_config)
-				_universes_edit.clear_entries();
+				_universes_editor.clear_entries();
 
-			int index = _universes_edit.highest_index() + 1;
+			int index = _universes_editor.highest_index() + 1;
 
 			for (int i = 0; i < patch_count; ++i)
 			{
 				if (start_internal_universe + i > lxmax::k_universe_max)
 					break;
 
-				_universes_edit.add_entry(index++, {
+				_universes_editor.add_entry(index++, {
 					                          "Universe " + std::to_string(start_internal_universe + i),
 					                          type, start_internal_universe + i, protocol, start_internal_universe + i,
 					                          start_protocol_universe + i, "[prefs]"
 				                          });
 			}
 
-			update_dmx_service_config();
-
-			return {};
+			return { };
 		}
 	};
 
-	message<> get_fixture_manager{
+	message<> get_fixture_manager {
 		this, "get_fixture_manager", "Gets a pointer to the fixture manager",
 		MIN_FUNCTION
 		{
-			return {&_fixture_manager};
+			return { &_fixture_manager };
 		}
 	};
 
-	message<> notify{
+	message<> notify {
 		this, "notify",
 		MIN_FUNCTION
 		{
-			notification n{args};
-			symbol attr_name{n.attr_name()};
+			notification n { args };
+			symbol attr_name { n.attr_name() };
 
-			if (n.source() == _universes_edit && n.name() == k_sym_modified)
+			if (!_is_ignore_editor_notifications && n.source() == _universes_editor && n.name() == k_sym_modified)
 			{
-				update_dmx_service_config();
+				update_dmx_universe_config_from_editor();
 			}
 
-			return {};
+			return { };
 		}
 	};
 
@@ -268,17 +311,10 @@ private:
 		this, "maxclass_setup",
 		MIN_FUNCTION
 		{
-#ifdef _DEBUG
-			cout << "LXMax " << lxmax::GIT_VERSION_STR << " - DEBUG BUILD - " << lxmax::VERSION_COPYRIGHT_STR << " - "
-				<< lxmax::VERSION_URL_STR << endl;
-#else
-			cout << "LXMax " << lxmax::GIT_VERSION_STR << " - " << lxmax::VERSION_COPYRIGHT_STR << " - " << lxmax::VERSION_URL_STR << endl;
-#endif
+			void* obj = c74::max::object_new_typed(k_sym_nobox, symbol("lxmax"), 0, nullptr);
+			c74::max::quittask_install(reinterpret_cast<c74::max::method>(on_max_quit), obj);
 
-			void* obj = c74::max::object_new_typed(symbol("nobox"), symbol("lxmax"), 0, nullptr);
-			c74::max::quittask_install((c74::max::method)on_max_quit, obj);
-
-			return {};
+			return { };
 		}
 	};
 };

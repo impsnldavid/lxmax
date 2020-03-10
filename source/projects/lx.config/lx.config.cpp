@@ -21,7 +21,7 @@ public:
 
     lx_config(const atoms& args = {})
     {
-        _lxmax_service = static_cast<c74::max::t_object*>(c74::max::object_findregistered(k_lxmax_namespace, k_lxmax_service_registration));
+        _lxmax_service = static_cast<c74::max::t_object*>(c74::max::object_findregistered(k_sym_nobox, k_lxmax_service_registration));
 
         assert(_lxmax_service);
     }

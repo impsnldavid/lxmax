@@ -13,12 +13,13 @@
 /// 
 class max_console_channel : public Poco::Channel
 {
-	c74::max::t_object* _object;
+	c74::max::t_object* _object = nullptr;
 
 public:
 	max_console_channel(c74::max::t_object* object)
 		: _object(object)
 	{
+		
 	}
 
 	void log(const Poco::Message& msg) override

@@ -14,22 +14,60 @@
 
 #include "dmx_channel_range.hpp"
 #include "config_helpers.hpp"
+#include "dmx_packet_sacn.hpp"
 
 #define MEMBER_WITH_KEY(type, name, default_value) static const inline std::string key_##name = #name;\
 							  type name = default_value;  
 
 namespace lxmax
 {
-	struct dmx_input_universe_config
+	class dmx_universe_config
 	{
-		dmx_input_universe_config() = default;
-		
-		MEMBER_WITH_KEY(dmx_protocol, protocol, dmx_protocol::artnet)
+	public:
+		virtual ~dmx_universe_config() = default;
 
+		inline static const std::string key_universe_type = "universe_type";
+		
+		MEMBER_WITH_KEY(std::string, label, "Universe 1")
+		MEMBER_WITH_KEY(bool, is_enabled, true)
+		MEMBER_WITH_KEY(dmx_protocol, protocol, dmx_protocol::artnet)
 		MEMBER_WITH_KEY(universe_address, internal_universe, 1)
 		MEMBER_WITH_KEY(universe_address, protocol_universe, 1)
 
-		std::string summary() const
+		void set_artnet_protocol_address(int net, int subnet, int universe)
+		{
+			protocol_universe = ((net & 0x80) << 8) + ((subnet & 0x0F) << 4) + (universe & 0x0F);
+		}
+
+		virtual dmx_universe_type universe_type() const = 0;
+
+		virtual std::unique_ptr<dmx_universe_config> clone() const = 0;
+		
+		virtual std::string summary() const = 0;
+
+		virtual void read_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) = 0;
+
+		virtual void write_to_configuration(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) const = 0;
+
+		static std::unique_ptr<dmx_universe_config> create_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config);
+	};
+	
+	class dmx_input_universe_config : public dmx_universe_config
+	{
+	public:
+		dmx_input_universe_config() = default;
+
+		dmx_universe_type universe_type() const override
+		{
+			return dmx_universe_type::input;
+		}
+
+		std::unique_ptr<dmx_universe_config> clone() const override
+		{
+			return std::make_unique<dmx_input_universe_config>(*this);
+		}
+		
+		std::string summary() const override
 		{
 			std::stringstream s;
 			
@@ -38,7 +76,7 @@ namespace lxmax
 				case dmx_protocol::artnet:
 				
 					s <<  "Net " << ((protocol_universe & 0x8000) >> 8)
-					  << ", Sub-net " << ((protocol_universe & 0xF0) >> 4)
+					  << ", Sub-Net " << ((protocol_universe & 0xF0) >> 4)
 					  << ", Universe " << (protocol_universe & 0x0F);
 				
 					break;
@@ -53,31 +91,32 @@ namespace lxmax
 			return s.str();
 		}
 
-		void read_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config)
+		void read_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) override
 		{
-			protocol = static_cast<dmx_protocol>(config->getInt(key_protocol));
-			
+			label = config->getString(key_label);
+			is_enabled = config->getBool(key_is_enabled);
+			protocol = dmx_protocol_from_string(config->getString(key_protocol));
 			internal_universe = config->getInt(key_internal_universe);
 			protocol_universe = config->getInt(key_protocol_universe);
 		}
 
-		void write_to_configuration(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) const
+		void write_to_configuration(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) const override
 		{
-			config->setInt(key_protocol, static_cast<int>(protocol));
-
+			config->setString(key_universe_type, dmx_universe_type_to_string(dmx_universe_type::input));
+			
+			config->setString(key_label, label);
+			config->setBool(key_is_enabled, is_enabled);
+			config->setString(key_protocol, dmx_protocol_to_string(protocol));
 			config->setInt(key_internal_universe, internal_universe);
 			config->setInt(key_protocol_universe, protocol_universe);
 		}
 	};
 	
-	struct dmx_output_universe_config
+	class dmx_output_universe_config : public dmx_universe_config
 	{
+	public:
 		dmx_output_universe_config() = default;
-		
-		MEMBER_WITH_KEY(dmx_protocol, protocol, dmx_protocol::artnet)
 
-		MEMBER_WITH_KEY(universe_address, internal_universe, 1)
-		MEMBER_WITH_KEY(universe_address, protocol_universe, 1)
 		MEMBER_WITH_KEY(universe_address, sync_address, 1)
 		MEMBER_WITH_KEY(int, priority, 100)
 
@@ -86,12 +125,17 @@ namespace lxmax
 		MEMBER_WITH_KEY(bool, is_artnet_alt_broadcast_address, false)
 		MEMBER_WITH_KEY(std::vector<Poco::Net::IPAddress>, unicast_addresses, { })
 
-		void set_artnet_protocol_address(int net, int subnet, int universe)
+		dmx_universe_type universe_type() const override
 		{
-			protocol_universe = ((net & 0x80) << 8) + ((subnet & 0x0F) << 4) + (universe & 0x0F);
+			return dmx_universe_type::output;
 		}
 
-		std::string summary() const
+		std::unique_ptr<dmx_universe_config> clone() const override
+		{
+			return std::make_unique<dmx_output_universe_config>(*this);
+		}
+		
+		std::string summary() const override
 		{
 			std::stringstream s;
 			
@@ -100,7 +144,7 @@ namespace lxmax
 				case dmx_protocol::artnet:
 				
 					s <<  "Net " << ((protocol_universe & 0x8000) >> 8)
-					  << ", Sub-net " << ((protocol_universe & 0xF0) >> 4)
+					  << ", Sub-Net " << ((protocol_universe & 0xF0) >> 4)
 					  << ", Universe " << (protocol_universe & 0x0F);
 
 					if (!is_use_global_destination)
@@ -129,7 +173,7 @@ namespace lxmax
 				case dmx_protocol::sacn:
 
 					s << "Priority " << priority
-					  << "Sync Address " << sync_address;
+					  << ", Sync Address " << sync_address;
 
 					if (!is_use_global_destination)
 					{
@@ -161,12 +205,14 @@ namespace lxmax
 			return s.str();
 		}
 
-		void read_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config)
+		void read_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) override
 		{
-			protocol = static_cast<dmx_protocol>(config->getInt(key_protocol));
-			
+			label = config->getString(key_label);
+			is_enabled = config->getBool(key_is_enabled);
+			protocol = dmx_protocol_from_string(config->getString(key_protocol));
 			internal_universe = config->getInt(key_internal_universe);
 			protocol_universe = config->getInt(key_protocol_universe);
+			
 			sync_address = config->getInt(key_sync_address);
 			priority = config->getInt(key_priority);
 
@@ -176,12 +222,16 @@ namespace lxmax
 			unicast_addresses = config_helpers::getIpAddressVector(config, key_unicast_addresses);
 		}
 
-		void write_to_configuration(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) const
+		void write_to_configuration(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) const override
 		{
-			config->setInt(key_protocol, static_cast<int>(protocol));
-
+			config->setString(key_universe_type, dmx_universe_type_to_string(dmx_universe_type::output));
+			
+			config->setString(key_label, label);
+			config->setBool(key_is_enabled, is_enabled);
+			config->setString(key_protocol, dmx_protocol_to_string(protocol));
 			config->setInt(key_internal_universe, internal_universe);
 			config->setInt(key_protocol_universe, protocol_universe);
+			
 			config->setInt(key_sync_address, sync_address);
 			config->setInt(key_priority, priority);
 

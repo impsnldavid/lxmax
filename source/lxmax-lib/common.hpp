@@ -46,4 +46,63 @@ namespace lxmax
 		sacn
 	};
 
+	inline std::string dmx_protocol_to_string(dmx_protocol value)
+	{
+		switch(value)
+		{
+			default:
+			case dmx_protocol::none:
+				return "None";
+
+			case dmx_protocol::artnet:
+				return "Art-Net";
+
+			case dmx_protocol::sacn:
+				return "sACN";
+		}
+	}
+
+	inline dmx_protocol dmx_protocol_from_string(const std::string& value)
+	{
+		if (value == "Art-Net")
+			return dmx_protocol::artnet;
+		else if (value == "sACN")
+			return dmx_protocol::sacn;
+		else
+			return dmx_protocol::none;
+	}
+
+	enum class dmx_universe_type
+	{
+		none,
+		input,
+		output
+	};
+
+	inline std::string dmx_universe_type_to_string(dmx_universe_type value)
+	{
+		switch(value)
+		{
+			default:
+			case dmx_universe_type::none:
+				return "None";
+
+			case dmx_universe_type::input:
+				return "Input";
+
+			case dmx_universe_type::output:
+				return "Output";
+		}
+	}
+
+	inline dmx_universe_type dmx_universe_type_from_string(const std::string& value)
+	{
+		if (value == "Input")
+			return dmx_universe_type::input;
+		else if (value == "Output")
+			return dmx_universe_type::output;
+		else
+			return dmx_universe_type::none;
+	}
+
 }
