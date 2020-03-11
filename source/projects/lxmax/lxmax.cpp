@@ -117,7 +117,7 @@ class lxmax_service : public object<lxmax_service>
 				assert(config != std::end(configs));
 			}
 			
-			config->second->label = e.second[0];
+			config->second->label = std::string(e.second[0]);
 			config->second->is_enabled = e.second[2];
 			config->second->protocol = lxmax::dmx_protocol_from_string(e.second[3]);
 			config->second->internal_universe = e.second[4];
@@ -149,13 +149,13 @@ public:
 		Poco::Logger& root_logger = Poco::Logger::root();
 		root_logger.setChannel(Poco::AutoPtr<max_console_channel>(new max_console_channel(maxobj())));
 		
-#ifdef _DEBUG
+#ifndef NDEBUG
 		root_logger.setLevel(Poco::Message::Priority::PRIO_TRACE);
 		root_logger.information("%s - DEBUG BUILD - %s - %s", 
 			lxmax::GIT_VERSION_STR, lxmax::VERSION_COPYRIGHT_STR, lxmax::VERSION_URL_STR);
 #else
 		root_logger.setLevel(Poco::Message::Priority::PRIO_INFORMATION);
-		root_logger.information("LXMax %s - %s - %s", 
+		root_logger.information("%s - %s - %s",
 			lxmax::GIT_VERSION_STR, lxmax::VERSION_COPYRIGHT_STR, lxmax::VERSION_URL_STR);
 #endif
 

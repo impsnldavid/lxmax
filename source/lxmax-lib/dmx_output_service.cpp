@@ -50,7 +50,7 @@ namespace lxmax
 				}
 				catch (const Poco::NotFoundException& ex)
 				{
-					poco_warning(
+					poco_warning_f(
 						_log,
 						"Failed to find network adapter with IP '%s' for Art-Net. Please select a new network adapter in LXMax preferences.",
 						_global_config.artnet_network_adapter.toString());
@@ -78,7 +78,7 @@ namespace lxmax
 				}
 				catch (const Poco::NotFoundException& ex)
 				{
-					poco_warning(
+					poco_warning_f(
 						_log,
 						"Failed to find network adapter with IP '%s' for sACN. Please select a new network adapter in LXMax preferences.",
 						_global_config.sacn_network_adapter.toString());
