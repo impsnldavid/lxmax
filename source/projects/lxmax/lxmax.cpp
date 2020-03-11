@@ -74,9 +74,9 @@ class lxmax_service : public object<lxmax_service>
 			const atoms a
 			{
 				pair.second->label,
-				pair.second->universe_type(),
+				lxmax::dmx_universe_type_to_string(pair.second->universe_type()),
 				pair.second->is_enabled ? 1 : 0,
-				lxmax::dmx_protocol_to_string(pair.second->protocol),
+				dmx_protocol_to_string(pair.second->protocol),
 				pair.second->internal_universe,
 				pair.second->protocol_universe,
 				pair.second->summary()
@@ -244,39 +244,82 @@ public:
 
 			const bool should_clear_config = args[0];
 			const int patch_count = args[1];
-			const symbol type = args[2];
-			const symbol protocol = args[3];
+			const lxmax::dmx_universe_type type = lxmax::dmx_universe_type_from_string(args[2]);
+			const lxmax::dmx_protocol protocol = lxmax::dmx_protocol_from_string(args[3]);
 			const int start_internal_universe = args[4];
 			const int start_protocol_universe = args[5];
 
 			if (patch_count < 1 || patch_count > 65535)
 				return { };
 
-			if (type != "Input" && type != "Output")
+			if (type == lxmax::dmx_universe_type::none)
 				return { };
 
-			if (protocol != "Art-Net" && protocol != "sACN")
+			if (protocol == lxmax::dmx_protocol::none)
 				return { };
 
-			if (start_internal_universe < 1 || start_internal_universe > lxmax::k_universe_max)
+			if (start_internal_universe < lxmax::k_universe_min || start_internal_universe > lxmax::k_universe_max)
+			{
 				return { };
+			}
+			
+			if (protocol == lxmax::dmx_protocol::artnet && 
+				(start_protocol_universe < lxmax::k_universe_artnet_min || start_protocol_universe > lxmax::k_universe_artnet_max))
+			{
+				return { };
+			}
+
+			if (protocol == lxmax::dmx_protocol::sacn && 
+				(start_protocol_universe < lxmax::k_universe_sacn_min || start_protocol_universe > lxmax::k_universe_sacn_max))
+			{
+				return { };
+			}
 
 			if (should_clear_config)
-				_universes_editor.clear_entries();
+				_preferences_manager->clear_universes();
 
-			int index = _universes_editor.highest_index() + 1;
+			int index = 1;
+			const auto& highest_universe = _preferences_manager->get_universe_configs().rbegin();
+			if (highest_universe != std::rend(_preferences_manager->get_universe_configs()))
+				index = highest_universe->first;
+			
+			int protocol_universe_max = 0;
+			switch(protocol)
+			{
+				case lxmax::dmx_protocol::artnet:
+					protocol_universe_max = lxmax::k_universe_artnet_max;
+					break;
+				case lxmax::dmx_protocol::sacn:
+					protocol_universe_max = lxmax::k_universe_sacn_max;
+					break;
+				default:
+				case lxmax::dmx_protocol::none:
+					assert(false);
+			}
 
 			for (int i = 0; i < patch_count; ++i)
 			{
 				if (start_internal_universe + i > lxmax::k_universe_max)
 					break;
 
-				_universes_editor.add_entry(index++, {
-					                          "Universe " + std::to_string(start_internal_universe + i),
-					                          type, start_internal_universe + i, protocol, start_internal_universe + i,
-					                          start_protocol_universe + i, "[prefs]"
-				                          });
+				if (start_protocol_universe + i > protocol_universe_max)
+					break;
+
+				std::unique_ptr<lxmax::dmx_universe_config> config;
+				if (type == lxmax::dmx_universe_type::input)
+					config = std::make_unique<lxmax::dmx_input_universe_config>();
+				else
+					config = std::make_unique<lxmax::dmx_output_universe_config>();
+
+				config->label = "Universe " + std::to_string(start_internal_universe + i);
+				config->protocol = protocol;
+				config->internal_universe = start_internal_universe + i;
+				config->protocol_universe = start_protocol_universe + i;
+					
+				_preferences_manager->add_universe(index++, std::move(config));				
 			}
+
+			update_editor_from_universes_config();
 
 			return { };
 		}

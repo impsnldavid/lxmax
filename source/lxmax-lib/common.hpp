@@ -18,6 +18,10 @@ namespace lxmax
 	const int k_universe_length = 512;
 	const int k_universe_min = 1;
 	const int k_universe_max = 65535;
+	const int k_universe_artnet_min = 0;
+	const int k_universe_artnet_max = 32767;
+	const int k_universe_sacn_min = 1;
+	const int k_universe_sacn_max = 63999;
 	const int k_dmx_framerate_max = 44;
 
 	const uint32_t k_dmx_8bit_max = UINT8_MAX;

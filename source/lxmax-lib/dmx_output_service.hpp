@@ -66,8 +66,6 @@ namespace lxmax
 			  _system_name(Poco::Environment::nodeName()),
 			  _system_id(Poco::UUIDGenerator::defaultGenerator().createFromName(Poco::UUID(), _system_name))
 		{
-			Poco::Net::initializeNetwork();
-
 			_universe_buffers.insert(universe_buffer_map_entry(universe_address(1), universe_buffer()));
 		}
 
@@ -101,8 +99,6 @@ namespace lxmax
 
 			_timer.setPeriodicInterval(static_cast<long>(std::round(1000. / framerate)));
 
-			
-
 			Poco::Net::NetworkInterface artnet_nic;
 			Poco::Net::NetworkInterface sacn_nic;
 
@@ -120,7 +116,11 @@ namespace lxmax
 			}
 
 			_artnet_socket = std::make_unique<Poco::Net::DatagramSocket>();
-			_artnet_socket->bind(Poco::Net::SocketAddress(artnet_nic.address(), 0), true, true);
+
+			Poco::Net::IPAddress artnet_nic_address;
+			artnet_nic.firstAddress(artnet_nic_address);
+			
+			_artnet_socket->bind(Poco::Net::SocketAddress(artnet_nic_address, 0), true, true);
 			_artnet_socket->setBroadcast(true);
 
 			if (!_global_config.sacn_network_adapter.isWildcard())
@@ -137,8 +137,15 @@ namespace lxmax
 			}
 
 			_sacn_socket = std::make_unique<Poco::Net::MulticastSocket>();
-			_sacn_socket->bind(Poco::Net::SocketAddress(sacn_nic.address(), 0), true, true);
-			_sacn_socket->setInterface(sacn_nic);
+
+			Poco::Net::IPAddress sacn_nic_address;
+			sacn_nic.firstAddress(sacn_nic_address);
+			
+			_sacn_socket->bind(Poco::Net::SocketAddress(sacn_nic_address, 0), true, true);
+
+			if (!sacn_nic_address.isWildcard())
+				_sacn_socket->setInterface(sacn_nic);
+			
 			_sacn_socket->setLoopback(true);
 		}
 		
