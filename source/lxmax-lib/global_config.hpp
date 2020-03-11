@@ -34,6 +34,7 @@ namespace lxmax
 		MEMBER_WITH_KEY(bool, is_sacn_global_destination_multicast, true)
 		MEMBER_WITH_KEY(std::vector<Poco::Net::IPAddress>, sacn_global_destination_unicast_addresses, { })
 		MEMBER_WITH_KEY(bool, is_send_sacn_sync_packets, true)
+		MEMBER_WITH_KEY(int, sacn_sync_address, 1)
 
 		void read_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config)
 		{
@@ -51,6 +52,7 @@ namespace lxmax
 			is_sacn_global_destination_multicast = config->getBool(key_is_sacn_global_destination_multicast);
 			sacn_global_destination_unicast_addresses = config_helpers::getIpAddressVector(config, key_sacn_global_destination_unicast_addresses);
 			is_send_sacn_sync_packets = config->getBool(key_is_send_sacn_sync_packets);
+			sacn_sync_address = config->getInt(key_sacn_sync_address);
 		}
 		
 		void write_to_configuration(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) const
@@ -69,6 +71,7 @@ namespace lxmax
 			config->setBool(key_is_sacn_global_destination_multicast, is_sacn_global_destination_multicast);
 			config_helpers::setIpAddressVector(config, key_sacn_global_destination_unicast_addresses, sacn_global_destination_unicast_addresses);
 			config->setBool(key_is_send_sacn_sync_packets, is_send_sacn_sync_packets);
+			config->setInt(key_sacn_sync_address, sacn_sync_address);
 		}
 	};
 }

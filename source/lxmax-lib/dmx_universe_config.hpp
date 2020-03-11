@@ -117,12 +117,10 @@ namespace lxmax
 	public:
 		dmx_output_universe_config() = default;
 
-		MEMBER_WITH_KEY(universe_address, sync_address, 1)
 		MEMBER_WITH_KEY(int, priority, 100)
 
 		MEMBER_WITH_KEY(bool, is_use_global_destination, true)
 		MEMBER_WITH_KEY(bool, is_broadcast_or_multicast, true)
-		MEMBER_WITH_KEY(bool, is_artnet_alt_broadcast_address, false)
 		MEMBER_WITH_KEY(std::vector<Poco::Net::IPAddress>, unicast_addresses, { })
 
 		dmx_universe_type universe_type() const override
@@ -151,7 +149,7 @@ namespace lxmax
 					{
 						if (is_broadcast_or_multicast)
 						{
-							s << ", Broadcast to " << (is_artnet_alt_broadcast_address ? "10.255.255.255" : "2.255.255.255");
+							s << ", Broadcast";
 						}
 						else
 						{
@@ -172,8 +170,7 @@ namespace lxmax
 					
 				case dmx_protocol::sacn:
 
-					s << "Priority " << priority
-					  << ", Sync Address " << sync_address;
+					s << "Priority " << priority;
 
 					if (!is_use_global_destination)
 					{
@@ -213,12 +210,10 @@ namespace lxmax
 			internal_universe = config->getInt(key_internal_universe);
 			protocol_universe = config->getInt(key_protocol_universe);
 			
-			sync_address = config->getInt(key_sync_address);
 			priority = config->getInt(key_priority);
 
 			is_use_global_destination = config->getBool(key_is_use_global_destination);
 			is_broadcast_or_multicast = config->getBool(key_is_broadcast_or_multicast);
-			is_artnet_alt_broadcast_address = config->getBool(key_is_artnet_alt_broadcast_address);
 			unicast_addresses = config_helpers::getIpAddressVector(config, key_unicast_addresses);
 		}
 
@@ -232,12 +227,10 @@ namespace lxmax
 			config->setInt(key_internal_universe, internal_universe);
 			config->setInt(key_protocol_universe, protocol_universe);
 			
-			config->setInt(key_sync_address, sync_address);
 			config->setInt(key_priority, priority);
 
 			config->setBool(key_is_use_global_destination, is_use_global_destination);
 			config->setBool(key_is_broadcast_or_multicast, is_broadcast_or_multicast);
-			config->setBool(key_is_artnet_alt_broadcast_address, is_artnet_alt_broadcast_address);
 			config_helpers::setIpAddressVector(config, key_unicast_addresses, unicast_addresses);
 		}
 	};

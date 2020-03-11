@@ -40,7 +40,11 @@ namespace lxmax
 
 		global_config _global_config;
 		dmx_universe_configs _universe_configs;
-		
+
+		bool _is_events_disabled { false };
+		bool _is_pending_global_config_event { false };
+		bool _is_pending_universe_config_event { false };
+
 		
 	public:
 		Poco::BasicEvent<void> global_config_changed;
@@ -53,14 +57,57 @@ namespace lxmax
 			
 		}
 
+		bool is_events_disabled() const
+		{
+			return _is_events_disabled;
+		}
+
+		void set_is_events_disabled(bool value, bool is_fire_pending = false)
+		{
+			if (value == _is_events_disabled)
+				return;
+
+			_is_events_disabled = value;
+
+			if (!_is_events_disabled && _is_pending_global_config_event)
+			{
+				if (is_fire_pending)
+					global_config_changed(this);
+				_is_pending_global_config_event = false;
+			}
+
+			if (!_is_events_disabled && _is_pending_universe_config_event)
+			{
+				if (is_fire_pending)
+					universe_config_changed(this);
+				_is_pending_universe_config_event = false;
+			}
+		}
+
+		void fire_global_config_changed()
+		{
+			if (_is_events_disabled)
+				_is_pending_global_config_event = true;
+			else
+				global_config_changed(this);
+		}
+
+		void fire_universe_config_changed()
+		{
+			if (_is_events_disabled)
+				_is_pending_universe_config_event = true;
+			else
+				universe_config_changed(this);
+		}
+		
 		void create_default()
 		{
 			_global_config = { };
 			_universe_configs.clear();
 
 			save();
-			global_config_changed(this);
-			universe_config_changed(this);
+			fire_global_config_changed();
+			fire_universe_config_changed();
 		}
 
 		void load()
@@ -129,8 +176,8 @@ namespace lxmax
 				create_default();
 			}
 
-			global_config_changed(this);
-			universe_config_changed(this);
+			fire_global_config_changed();
+			fire_universe_config_changed();
 		}
 		
 		void save()
@@ -186,7 +233,7 @@ namespace lxmax
 		{
 			_global_config = std::move(config);
 			save();
-			global_config_changed(this);
+			fire_global_config_changed();
 		}
 
 		const dmx_universe_configs& get_universe_configs() const
@@ -198,28 +245,28 @@ namespace lxmax
 		{
 			_universe_configs = std::move(configs);
 			save();
-			universe_config_changed(this);
+			fire_universe_config_changed();
 		}
 
 		void add_universe(int key, std::unique_ptr<dmx_universe_config> config)
 		{
 			_universe_configs.insert_or_assign(key, std::move(config));
 			save();
-			universe_config_changed(this);
+			fire_universe_config_changed();
 		}
 
 		void remove_universe(int key)
 		{
 			_universe_configs.erase(key);
 			save();
-			universe_config_changed(this);
+			fire_universe_config_changed();
 		}
 
 		void clear_universes()
 		{
 			_universe_configs.clear();
 			save();
-			universe_config_changed(this);
+			fire_universe_config_changed();
 		}
 	};
 }

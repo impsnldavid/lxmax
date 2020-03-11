@@ -58,13 +58,13 @@ namespace lxmax
 		dmx_packet_artnet() = default;
 
 		dmx_packet_artnet(universe_address address, uint8_t sequence, const universe_buffer& data)
-			: dmx_channels(k_universe_length)
+			: dmx_channels(data.size())
 		{
 			header.sub_uni = address & 0x00FF;
 			header.net = (address & 0x7F00) >> 8;
 			header.sequence = sequence;
 			header.length = k_universe_length;
-			memcpy(dmx_channels.data(), data.data(),k_universe_length);
+			memcpy(dmx_channels.data(), data.data(),std::min(data.size(), dmx_channels.size()));
 		}
 
 		static bool deserialize(char* data, size_t length, dmx_packet_artnet& packet) noexcept

@@ -90,10 +90,12 @@ class lxmax_service : public object<lxmax_service>
 
 	void update_dmx_universe_config_from_editor()
 	{
-		const auto& entries = _universes_editor.get_entries();
+		_preferences_manager->set_is_events_disabled(true);
+		
+		auto entries = _universes_editor.get_entries();
 		auto& configs = _preferences_manager->get_universe_configs();
 
-		for(const auto& e : entries)
+		for(auto& e : entries)
 		{
 			auto config = configs.find(e.first);
 
@@ -120,9 +122,15 @@ class lxmax_service : public object<lxmax_service>
 			config->second->protocol = lxmax::dmx_protocol_from_string(e.second[3]);
 			config->second->internal_universe = e.second[4];
 			config->second->protocol_universe = e.second[5];
+
+			e.second[6] = config->second->summary();
+			_universes_editor.add_entry(e.first, e.second);
 		}
 
 		_preferences_manager->save();
+
+		_preferences_manager->set_is_events_disabled(false);
+		_preferences_manager->fire_universe_config_changed();
 	}
 
 public:
