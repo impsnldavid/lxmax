@@ -12,6 +12,7 @@ include_directories(
 )
 
 set( SOURCE_FILES
+	../shared/common.hpp
 	${PROJECT_NAME}.cpp
 )
 

@@ -8,7 +8,8 @@
 #include "precision_helpers.hpp"
 #include "common.hpp"
 
-using namespace c74::min;
+using namespace c74;
+using namespace min;
 
 enum_map lx_dimmer_precision_info = {
     "8-Bit",
@@ -50,7 +51,7 @@ enum_map lx_dimmer_priority_info {
 
 class lx_dimmer : public object<lx_dimmer>, public lxmax::fixture {
 
-	c74::max::t_object* _lxmax_service;
+	max::t_object* _lxmax_service;
 	lxmax::fixture_manager* _fixture_manager;
 	
 	std::mutex _value_mutex;
@@ -161,13 +162,11 @@ public:
 
 	lx_dimmer(const atoms& args = {})
     {
-        _lxmax_service = (c74::max::t_object*)c74::max::object_findregistered(k_sym_nobox, k_lxmax_service_registration);
-        assert(_lxmax_service);
-
-		c74::max::t_object* obj = c74::max::object_method_direct_getobject(_lxmax_service, symbol("get_fixture_manager"));
-
-		_fixture_manager = (lxmax::fixture_manager*)obj;
-		assert(_fixture_manager);
+        if (!maxobj())
+			return;
+		
+        _lxmax_service = get_lxmax_service();
+        _fixture_manager = get_fixture_manager(_lxmax_service);
 
 		update_range(attr_input_range, attr_precision);
     }

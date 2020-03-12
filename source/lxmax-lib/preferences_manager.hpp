@@ -45,6 +45,22 @@ namespace lxmax
 		bool _is_pending_global_config_event { false };
 		bool _is_pending_universe_config_event { false };
 
+		template<class T>
+		static std::string get_json_string(T config)
+		{
+			Poco::AutoPtr<Poco::Util::JSONConfiguration> json(new Poco::Util::JSONConfiguration());
+			auto c = json.cast<Poco::Util::AbstractConfiguration>();
+			config->write_to_configuration(c);
+
+			std::stringstream ss;
+			Poco::OutputLineEndingConverter lec(ss);
+			json->save(lec);
+			lec.flush();
+			ss.flush();
+
+			return ss.str();
+		}
+
 		
 	public:
 		Poco::BasicEvent<void> global_config_changed;
@@ -229,6 +245,11 @@ namespace lxmax
 			return _global_config;
 		}
 
+		std::string get_global_config_as_json_string() const
+		{
+			return get_json_string(&_global_config);
+		}
+
 		void set_global_config(global_config config)
 		{
 			_global_config = std::move(config);
@@ -239,6 +260,16 @@ namespace lxmax
 		const dmx_universe_configs& get_universe_configs() const
 		{
 			return _universe_configs;
+		}
+
+		std::string get_universe_config_as_json_string(int index)
+		{
+			const auto& universe = _universe_configs.find(index);
+
+			if (universe == std::end(_universe_configs))
+				return "";
+			
+			return get_json_string(universe->second.get());
 		}
 
 		void set_universes_configs(dmx_universe_configs configs)
@@ -268,5 +299,7 @@ namespace lxmax
 			save();
 			fire_universe_config_changed();
 		}
+
+		
 	};
 }

@@ -18,12 +18,12 @@
 #include "max_console_channel.hpp"
 #include "preferences_manager.hpp"
 
-
-using namespace c74::min;
+using namespace c74;
+using namespace min;
 
 void on_max_quit(void* a)
 {
-	c74::max::object_free(a);
+	max::object_free(a);
 }
 
 class lxmax_service : public object<lxmax_service>
@@ -53,10 +53,10 @@ class lxmax_service : public object<lxmax_service>
 	static std::string get_preference_path()
 	{
 		short pref_path;
-		c74::max::preferences_path(nullptr, true, &pref_path);
+		max::preferences_path(nullptr, true, &pref_path);
 
 		char file_path[MAX_PATH_CHARS];
-		c74::max::path_toabsolutesystempath(pref_path, k_preferences_filename.c_str(), file_path);
+		max::path_toabsolutesystempath(pref_path, k_preferences_filename.c_str(), file_path);
 
 		return file_path;
 	}
@@ -74,7 +74,7 @@ class lxmax_service : public object<lxmax_service>
 			const atoms a
 			{
 				pair.second->label,
-				lxmax::dmx_universe_type_to_string(pair.second->universe_type()),
+				dmx_universe_type_to_string(pair.second->universe_type()),
 				pair.second->is_enabled ? 1 : 0,
 				dmx_protocol_to_string(pair.second->protocol),
 				pair.second->internal_universe,
@@ -186,11 +186,11 @@ public:
 		object_detach_byptr(maxobj(), _universes_editor);
 
 		if (_registered_obj != nullptr)
-			c74::max::object_unregister(_registered_obj);
+			max::object_unregister(_registered_obj);
 	}
 
 	message<> add_universe {
-		this, "add_universe", "Adds a universe to the configuration",
+		this, "add_universe", "Adds a universe to the configuration", message_type::no_argument,
 		MIN_FUNCTION
 		{
 			const auto& last_config = _preferences_manager->get_universe_configs().rbegin();
@@ -217,7 +217,7 @@ public:
 	};
 
 	message<> remove_universe {
-		this, "remove_universe", "Removes a universe from the configuration",
+		this, "remove_universe", "Removes a universe from the configuration", message_type::int_argument,
 		MIN_FUNCTION
 		{
 			const int index = args[0];
@@ -232,7 +232,7 @@ public:
 	};
 
 	message<> clear_universes {
-		this, "clear_universes", "Removes all universes from the configuration",
+		this, "clear_universes", "Removes all universes from the configuration", message_type::no_argument,
 		MIN_FUNCTION
 		{
 			_preferences_manager->clear_universes();
@@ -334,10 +334,42 @@ public:
 	};
 
 	message<> get_fixture_manager {
-		this, "get_fixture_manager", "Gets a pointer to the fixture manager",
+		this, "get_fixture_manager", "Gets a pointer to the fixture manager", message_type::gimmeback,
 		MIN_FUNCTION
 		{
-			return { &_fixture_manager };
+			max::t_object* obj = (max::t_object*)_fixture_manager.get();
+			
+			return { obj };
+		}
+	};
+
+	message<> get_global_preferences {
+		this, "get_global_preferences", "Gets a dictionary containing the global preferences", message_type::gimmeback,
+		MIN_FUNCTION
+		{
+			const std::string json = _preferences_manager->get_global_config_as_json_string();
+
+			max::t_dictionary* d = nullptr;
+			char error_string[256];
+			dictobj_dictionaryfromstring(&d, json.c_str(), true, error_string);
+			
+			return { d };
+		}
+	};
+
+	message<> get_universe_preferences {
+		this, "get_universe_preferences", "Gets a dictionary containing a specified universe's preferences", message_type::gimmeback,
+		MIN_FUNCTION
+		{
+			const int index = args[0];
+			
+			const std::string json = _preferences_manager->get_universe_config_as_json_string(index);
+
+			max::t_dictionary* d = nullptr;
+			char error_string[256];
+			dictobj_dictionaryfromstring(&d, json.c_str(), true, error_string);
+			
+			return { d };
 		}
 	};
 
@@ -362,8 +394,8 @@ private:
 		this, "maxclass_setup",
 		MIN_FUNCTION
 		{
-			void* obj = c74::max::object_new_typed(k_sym_nobox, symbol("lxmax"), 0, nullptr);
-			c74::max::quittask_install(reinterpret_cast<c74::max::method>(on_max_quit), obj);
+			void* obj = max::object_new_typed(k_sym_nobox, symbol("lxmax"), 0, nullptr);
+			max::quittask_install(reinterpret_cast<max::method>(on_max_quit), obj);
 
 			return { };
 		}

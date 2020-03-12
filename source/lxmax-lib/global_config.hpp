@@ -33,7 +33,7 @@ namespace lxmax
 		MEMBER_WITH_KEY(Poco::Net::IPAddress, sacn_network_adapter, Poco::Net::IPAddress("0.0.0.0"))
 		MEMBER_WITH_KEY(bool, is_sacn_global_destination_multicast, true)
 		MEMBER_WITH_KEY(std::vector<Poco::Net::IPAddress>, sacn_global_destination_unicast_addresses, { })
-		MEMBER_WITH_KEY(bool, is_send_sacn_sync_packets, true)
+		MEMBER_WITH_KEY(bool, is_send_sacn_sync_packets, false)
 		MEMBER_WITH_KEY(int, sacn_sync_address, 1)
 
 		void read_from_configuration(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config)

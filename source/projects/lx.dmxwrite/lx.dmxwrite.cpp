@@ -31,13 +31,11 @@ public:
 
 	lx_dmxwrite(const atoms& args = {})
     {
-        _lxmax_service = (c74::max::t_object*)c74::max::object_findregistered(k_sym_nobox, k_lxmax_service_registration);
-        assert(_lxmax_service);
-
-		c74::max::t_object* obj = c74::max::object_method_direct_getobject(_lxmax_service, symbol("get_fixture_manager"));
-
-		_fixture_manager = (lxmax::fixture_manager*)obj;
-		assert(_fixture_manager);
+        if (!maxobj())
+			return;
+		
+        _lxmax_service = get_lxmax_service();
+        _fixture_manager = get_fixture_manager(_lxmax_service);
     }
     
     attribute<int, threadsafe::no, limit::clamp> attr_num_channels { this, "num_channels", 1,

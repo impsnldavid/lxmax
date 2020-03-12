@@ -4,6 +4,7 @@
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #include "dmx_output_service.hpp"
+#include <Poco/Net/NetException.h>
 
 namespace lxmax
 {
@@ -26,7 +27,8 @@ namespace lxmax
 		_timer.setPeriodicInterval(static_cast<long>(std::round(1000. / framerate)));
 
 		{
-			Poco::Net::IPAddress artnet_nic_address = Poco::Net::IPAddress("0.0.0.0");
+			Poco::Net::IPAddress artnet_nic_address;
+			_artnet_broadcast_address = Poco::Net::IPAddress("255.255.255.255");
 			
 			if (!_global_config.artnet_network_adapter.isWildcard())
 			{
@@ -48,7 +50,7 @@ namespace lxmax
 					
 					_artnet_broadcast_address = artnet_nic.broadcastAddress(index);
 				}
-				catch (const Poco::NotFoundException& ex)
+				catch (const Poco::Net::InterfaceNotFoundException& ex)
 				{
 					poco_warning_f(
 						_log,
@@ -56,11 +58,7 @@ namespace lxmax
 						_global_config.artnet_network_adapter.toString());
 				}
 			}
-			else
-			{
-				_artnet_broadcast_address = Poco::Net::IPAddress("255.255.255.255");
-			}
-
+			
 			_artnet_socket = std::make_unique<Poco::Net::DatagramSocket>();
 
 			_artnet_socket->bind(Poco::Net::SocketAddress(artnet_nic_address, k_artnet_port), true, true);
@@ -76,7 +74,7 @@ namespace lxmax
 				{
 					sacn_nic = Poco::Net::NetworkInterface::forAddress(_global_config.sacn_network_adapter);
 				}
-				catch (const Poco::NotFoundException& ex)
+				catch (const Poco::Net::InterfaceNotFoundException& ex)
 				{
 					poco_warning_f(
 						_log,

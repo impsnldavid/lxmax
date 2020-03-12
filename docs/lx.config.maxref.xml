@@ -29,9 +29,14 @@
 
 	<methodlist>
 
-		<method name='get_global_settings'>
-			<digest>Outputs a dictionary containing the current global settings </digest>
-			<description>Outputs a dictionary containing the current global settings </description>
+		<method name='get_global_preferences'>
+			<digest>Outputs a dictionary containing the current global preferences </digest>
+			<description>Outputs a dictionary containing the current global preferences </description>
+		</method>
+
+		<method name='add_universe'>
+			<digest>Adds a universe to the global configuration </digest>
+			<description>Adds a universe to the global configuration </description>
 		</method>
 
 		<method name='clear_universes'>
@@ -39,24 +44,24 @@
 			<description>Removes all universes from the configuration </description>
 		</method>
 
-		<method name='quick_patch'>
-			<digest>Quickly add a number of universes to the configuration </digest>
-			<description>Quickly add a number of universes to the configuration </description>
-		</method>
-
 		<method name='remove_universe'>
 			<digest>Removes a universe from the global configuration </digest>
 			<description>Removes a universe from the global configuration </description>
 		</method>
 
-		<method name='get_local_settings'>
-			<digest>Outputs a dictionary containing local settings for a universe </digest>
-			<description>Outputs a dictionary containing local settings for a universe </description>
+		<method name='quick_patch'>
+			<digest>Quickly add a number of universes to the configuration </digest>
+			<description>Quickly add a number of universes to the configuration </description>
 		</method>
 
-		<method name='add_universe'>
-			<digest>Adds a universe to the global configuration </digest>
-			<description>Adds a universe to the global configuration </description>
+		<method name='get_universe_preferences'>
+			<digest>Gets a dictionary containing a specified universe's preferences </digest>
+			<description>Gets a dictionary containing a specified universe's preferences </description>
+		</method>
+
+		<method name='get_network_adapters'>
+			<digest>Outputs a dictionary containing the currently available network adapters </digest>
+			<description>Outputs a dictionary containing the currently available network adapters </description>
 		</method>
 
 	</methodlist>
