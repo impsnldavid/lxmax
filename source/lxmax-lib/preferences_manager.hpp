@@ -175,19 +175,19 @@ namespace lxmax
 			}
 			catch(const Poco::NotFoundException& ex)
 			{
-				poco_error_f(_log, "Failed to find property '%s' in saved preferences. Reseting to default preferences...", ex.name());
+				poco_error_f(_log, "Failed to find property in saved preferences. %s. Resettting to default preferences...", ex.message());
 				
 				create_default();
 			}
 			catch(const Poco::SyntaxException& ex)
 			{
-				poco_error_f(_log, "Failed to pase property '%s' from saved preferences. Reseting to default preferences...", ex.name());
+				poco_error_f(_log, "Failed to pase property from saved preferences. %s. Resetting to default preferences...", ex.message());
 				
 				create_default();
 			}
 			catch(...)
 			{
-				poco_error(_log, "Failed to read preferences file. Reseting to default preferences...");
+				poco_error(_log, "Failed to read preferences file. Resetting to default preferences...");
 				
 				create_default();
 			}
@@ -257,6 +257,24 @@ namespace lxmax
 			fire_global_config_changed();
 		}
 
+		void set_global_config(Poco::AutoPtr<Poco::Util::AbstractConfiguration> config)
+		{
+			try
+			{
+				global_config c;
+				c.read_from_configuration(config);
+				set_global_config(c);
+			}
+			catch(const Poco::NotFoundException& ex)
+			{
+				poco_error_f(_log, "Failed to set global preferences. %s", ex.message());
+			}
+			catch(const Poco::SyntaxException& ex)
+			{
+				poco_error_f(_log, "Failed to set global preferences. %s", ex.message());
+			}
+		}
+
 		const dmx_universe_configs& get_universe_configs() const
 		{
 			return _universe_configs;
@@ -279,6 +297,34 @@ namespace lxmax
 			fire_universe_config_changed();
 		}
 
+		void set_universe_config(int index, std::unique_ptr<dmx_universe_config> config)
+		{
+			if (_universe_configs.find(index) == std::end(_universe_configs))
+				return;
+
+			_universe_configs[index] = std::move(config);
+
+			save();
+			fire_universe_config_changed();
+		}
+		
+		void set_universe_config(int index, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config)
+		{
+			try
+			{
+				auto c = dmx_universe_config::create_from_configuration(config);
+				set_universe_config(index, std::move(c));
+			}
+			catch(const Poco::NotFoundException& ex)
+			{
+				poco_error_f(_log, "Failed to set global preferences. Couldn't find property '%s'.", ex.name());
+			}
+			catch(const Poco::SyntaxException& ex)
+			{
+				poco_error_f(_log, "Failed to set global preferences. Failed to parse property '%s' value.", ex.name());
+			}
+		}
+		
 		void add_universe(int key, std::unique_ptr<dmx_universe_config> config)
 		{
 			_universe_configs.insert_or_assign(key, std::move(config));

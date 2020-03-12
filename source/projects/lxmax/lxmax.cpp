@@ -9,6 +9,8 @@
 
 #include <Poco/Logger.h>
 #include <Poco/Delegate.h>
+#include <Poco/Net/NetException.h>
+
 
 #include "c74_min.h"
 #include "c74_min_flags.h"
@@ -133,6 +135,67 @@ class lxmax_service : public object<lxmax_service>
 		_preferences_manager->fire_universe_config_changed();
 	}
 
+	static Poco::AutoPtr<Poco::Util::AbstractConfiguration> dict_to_json(max::t_dictionary* dict)
+	{
+		Poco::AutoPtr<Poco::Util::AbstractConfiguration> config(new Poco::Util::JSONConfiguration());
+		
+		long num_keys;
+		max::t_symbol** keys;
+		max::dictionary_getkeys(dict, &num_keys, &keys);
+
+		for(long i = 0; i < num_keys; ++i)
+		{
+			if (max::dictionary_entryisatomarray(dict, keys[i]))
+			{
+				long argc;
+				max::t_atom* argv;
+				max::dictionary_getatoms(dict, keys[i], &argc, &argv);
+
+				auto view = config->createView(keys[i]->s_name);
+
+				for(long j = 0; j < argc; ++j)
+				{
+					switch(max::atom_gettype(argv + j))
+					{
+						case max::A_LONG:
+							config->setInt("[" + std::to_string(j) + "]", max::atom_getlong(argv + j));
+							break;
+
+						case max::A_FLOAT:
+							config->setDouble("[" + std::to_string(j) + "]", max::atom_getfloat(argv + j));
+							break;
+
+						case max::A_SYM:
+							config->setString("[" + std::to_string(j) + "]", max::atom_getsym(argv + j)->s_name);
+							break;
+					}
+				}
+			}
+			else
+			{
+				max::t_atom argv;
+				max::dictionary_getatom(dict, keys[i], &argv);
+
+				switch(max::atom_gettype(&argv))
+				{
+					case max::A_LONG:
+						config->setInt(keys[i]->s_name, max::atom_getlong(&argv));
+						break;
+
+					case max::A_FLOAT:
+						config->setDouble(keys[i]->s_name, max::atom_getfloat(&argv));
+						break;
+
+					case max::A_SYM:
+						config->setString(keys[i]->s_name, max::atom_getsym(&argv)->s_name);
+						break;
+				}
+			}
+		}
+
+		return config;
+	}
+
 public:
 	MIN_DESCRIPTION { "LXMax service object." };
 	MIN_TAGS { "lxmax" };
@@ -190,7 +253,7 @@ public:
 	}
 
 	message<> add_universe {
-		this, "add_universe", "Adds a universe to the configuration", message_type::no_argument,
+		this, "add_universe", "Adds a universe to the configuration",
 		MIN_FUNCTION
 		{
 			const auto& last_config = _preferences_manager->get_universe_configs().rbegin();
@@ -217,7 +280,7 @@ public:
 	};
 
 	message<> remove_universe {
-		this, "remove_universe", "Removes a universe from the configuration", message_type::int_argument,
+		this, "remove_universe", "Removes a universe from the configuration",
 		MIN_FUNCTION
 		{
 			const int index = args[0];
@@ -232,7 +295,7 @@ public:
 	};
 
 	message<> clear_universes {
-		this, "clear_universes", "Removes all universes from the configuration", message_type::no_argument,
+		this, "clear_universes", "Removes all universes from the configuration",
 		MIN_FUNCTION
 		{
 			_preferences_manager->clear_universes();
@@ -357,6 +420,18 @@ public:
 		}
 	};
 
+	message<> set_global_preferences {
+		this, "set_global_preferences", "Sets the current global preferences to values from a dictionary",
+		MIN_FUNCTION
+		{
+			const symbol dict_name(args[0]);
+			const dict dict (dict_name);
+			_preferences_manager->set_global_config(dict_to_json(dict));
+			
+			return { };
+		}
+	};
+
 	message<> get_universe_preferences {
 		this, "get_universe_preferences", "Gets a dictionary containing a specified universe's preferences", message_type::gimmeback,
 		MIN_FUNCTION
@@ -368,6 +443,78 @@ public:
 			max::t_dictionary* d = nullptr;
 			char error_string[256];
 			dictobj_dictionaryfromstring(&d, json.c_str(), true, error_string);
+			
+			return { d };
+		}
+	};
+
+	message<> set_universe_preferences {
+		this, "set_universe_preferences", "Sets the preferences for a specified universe to values from a dictionary",
+		MIN_FUNCTION
+		{
+			const dict dict (args[1]);
+			_preferences_manager->set_universe_config(args[0], dict_to_json(dict));
+			
+			return { };
+		}
+	};
+
+	message<> get_network_adapters {
+		this, "get_network_adapters", "Gets a dictionary containing the available network adapters", message_type::gimmeback,
+		MIN_FUNCTION
+		{
+			const auto list = Poco::Net::NetworkInterface::list();
+
+			const dict network_adapters(symbol(true));
+
+			const auto artnet_adapter_address = _preferences_manager->get_global_config().artnet_network_adapter;
+			const auto sacn_adapter_address = _preferences_manager->get_global_config().sacn_network_adapter;
+			
+			try
+			{
+				if (!artnet_adapter_address.isWildcard())
+					Poco::Net::NetworkInterface::forAddress(artnet_adapter_address);
+			}
+			catch(const Poco::Net::InterfaceNotFoundException& ex)
+			{
+				dict missing_adapter;
+				missing_adapter["name"] = "Art-Net Adapter Not Found";
+				missing_adapter["address"] = artnet_adapter_address.toString();
+				max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-3)), missing_adapter);
+			}
+
+			try
+			{
+				if (!sacn_adapter_address.isWildcard())
+					Poco::Net::NetworkInterface::forAddress(sacn_adapter_address);
+			}
+			catch(const Poco::Net::InterfaceNotFoundException& ex)
+			{
+				dict missing_adapter;
+				missing_adapter["name"] = "sACN Adapter Not Found";
+				missing_adapter["address"] = sacn_adapter_address.toString();
+				max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-2)), missing_adapter);
+			}
+			
+            dict no_adapter;
+        	no_adapter["name"] = "All Adapters";
+			no_adapter["address"] = Poco::Net::IPAddress().toString();
+            max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-1)), no_adapter);
+        	
+        	for(const auto& n : list)
+            {
+                Poco::Net::IPAddress address;
+                n.firstAddress(address);
+        		
+                dict adapter;
+
+        		adapter["name"] = n.displayName();
+        		adapter["address"] = address.toString();
+
+                max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(n.index())), adapter);
+            }
+
+			max::t_dictionary* d = network_adapters;
 			
 			return { d };
 		}

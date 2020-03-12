@@ -31,7 +31,7 @@ public:
 
 	outlet<> dump_outlet { this, "dump" };
     
-	message<> add_universe { this, "add_universe", "Adds a universe to the global configuration", message_type::no_argument,
+	message<> add_universe { this, "add_universe", "Adds a universe to the global configuration",
 		MIN_FUNCTION {
             
             max::t_atom rv {};
@@ -41,9 +41,12 @@ public:
 		}
 	};
     
-    message<> remove_universe { this, "remove_universe", "Removes a universe from the global configuration", message_type::int_argument,
+    message<> remove_universe { this, "remove_universe", "Removes a universe from the global configuration",
         MIN_FUNCTION {
-            
+
+        	if (args.empty() || args[0].type() != message_type::int_argument)
+				return { };
+        	
             const max::t_atom_long index = args[0];
             max::t_atom rv {};
             object_method_long(_lxmax_service, symbol("remove_universe"), index, &rv);
@@ -51,7 +54,7 @@ public:
         }
     };
     
-    message<> clear_universes { this, "clear_universes", "Removes all universes from the configuration", message_type::no_argument,
+    message<> clear_universes { this, "clear_universes", "Removes all universes from the configuration",
         MIN_FUNCTION {
             
             max::t_atom rv {};
@@ -96,11 +99,31 @@ public:
         }
     };
 
-	message<> get_local_settings { this, "get_universe_preferences", "Gets a dictionary containing a specified universe's preferences",
+	message<> set_global_preferences { this, "set_global_preferences", "Sets the current global preferences to values from a dictionary",
+        MIN_FUNCTION {
+
+			if (args.size() != 2 
+            || args[0].type() != message_type::symbol_argument || args[1].type() != message_type::symbol_argument
+            || args[0] != symbol("dictionary"))
+            {
+				return { };
+            }
+
+        	max::t_atom argv;
+        	max::atom_setsym(&argv, args[1]);
+        	
+            max::t_atom rv; 
+            max::object_method_typed(_lxmax_service, symbol("set_global_preferences"), 1, &argv, &rv);
+        	
+            return {};
+        }
+    };
+
+	message<> get_universe_preferences { this, "get_universe_preferences", "Gets a dictionary containing a specified universe's preferences",
 		MIN_FUNCTION {
             
-			if (args.empty() || args[0].a_type != max::A_LONG)
-                return {};
+			if (args.empty() || args[0].type() != message_type::int_argument)
+                return { };
 
             max::t_atom index;
 			max::atom_setlong(&index, args[0]);
@@ -119,27 +142,40 @@ public:
         }
     };
 
-	message<> get_network_adapters { this, "get_network_adapters", "Outputs a dictionary containing the currently available network adapters", message_type::no_argument,
+	message<> set_universe_preferences { this, "set_universe_preferences", "Sets the preferences for a specified universe to values from a dictionary",
         MIN_FUNCTION {
-            
-			const auto list = Poco::Net::NetworkInterface::list();
 
-        	dict network_adapters(symbol(true));
-
-        	for(const auto& n : list)
+			if (args.size() != 3
+				|| args[0].type() != message_type::int_argument || args[1].type() != message_type::symbol_argument 
+                || args[2].type() != message_type::symbol_argument
+                || args[1] != symbol("dictionary"))
             {
-                Poco::Net::IPAddress address;
-                n.firstAddress(address);
-        		
-                dict adapter;
-
-        		adapter["name"] = n.displayName();
-        		adapter["address"] = address.toString();
-
-                max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(n.index())), adapter);
+				return { };
             }
 
-        	dump_outlet.send( { symbol("network_adapters"), symbol("dictionary"), network_adapters.name() });
+        	max::t_atom argv[2];
+        	max::atom_setsym(argv, args[0]);
+        	max::atom_setlong(argv + 1, args[1]);
+        	
+            max::t_atom rv; 
+            max::object_method_typed(_lxmax_service, symbol("set_global_preferences"), 2, argv, &rv);
+        	
+            return {};
+        }
+    };
+
+	message<> get_network_adapters { this, "get_network_adapters", "Outputs a dictionary containing the available network adapters",
+        MIN_FUNCTION {
+            
+			max::t_atom rv; 
+            max::object_method_typed(_lxmax_service, symbol("get_network_adapters"), 0, nullptr, &rv);
+
+			max::t_dictionary* d = static_cast<max::t_dictionary*>(max::atom_getobj(&rv));
+
+        	max::t_symbol* name = nullptr;
+        	dictobj_register(d, &name);
+        	
+            dump_outlet.send({ symbol("network_adapters"), symbol("dictionary"), name });
         	
             return { };
         }

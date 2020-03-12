@@ -29,6 +29,11 @@
 
 	<methodlist>
 
+		<method name='set_universe_preferences'>
+			<digest>Sets the preferences for a specified universe to values from a dictionary </digest>
+			<description>Sets the preferences for a specified universe to values from a dictionary </description>
+		</method>
+
 		<method name='get_global_preferences'>
 			<digest>Outputs a dictionary containing the current global preferences </digest>
 			<description>Outputs a dictionary containing the current global preferences </description>
@@ -59,9 +64,14 @@
 			<description>Gets a dictionary containing a specified universe's preferences </description>
 		</method>
 
+		<method name='set_global_preferences'>
+			<digest>Sets the current global preferences to values from a dictionary </digest>
+			<description>Sets the current global preferences to values from a dictionary </description>
+		</method>
+
 		<method name='get_network_adapters'>
-			<digest>Outputs a dictionary containing the currently available network adapters </digest>
-			<description>Outputs a dictionary containing the currently available network adapters </description>
+			<digest>Outputs a dictionary containing the available network adapters </digest>
+			<description>Outputs a dictionary containing the available network adapters </description>
 		</method>
 
 	</methodlist>
