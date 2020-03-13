@@ -5,12 +5,16 @@
 
 #pragma once
 
+#include <Poco/JSON/Array.h>
 #include <vector>
 #include <Poco/Util/AbstractConfiguration.h>
 #include <Poco/Net/IPAddress.h>
 
 namespace lxmax::config_helpers
 {
+	std::vector<std::string> getArray(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config,
+	                                  const std::string& key);
+
 	inline Poco::Net::IPAddress getIpAddress(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config, const std::string& key)
 	{
 		Poco::Net::IPAddress value;
@@ -33,10 +37,15 @@ namespace lxmax::config_helpers
 	{
 		std::vector<Poco::Net::IPAddress> values;
 		std::vector<std::string> keys;
-		config->keys(key, keys);
 
-		for (const auto& k : keys)
-			values.push_back(getIpAddress(config, k));
+		for (const auto& raw_value : getArray(config, key))
+		{
+			Poco::Net::IPAddress value;
+			if (!Poco::Net::IPAddress::tryParse(raw_value, value))
+				throw Poco::SyntaxException("Cannot convert to IPAddress", raw_value);
+			
+			values.push_back(value);
+		}
 
 		return values;
 	}
@@ -44,7 +53,14 @@ namespace lxmax::config_helpers
 	inline void setIpAddressVector(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config, const std::string& key,
 	                               const std::vector<Poco::Net::IPAddress>& values)
 	{
-		for (size_t i = 0; i < values.size(); ++i)
+		if (values.empty())
+		{
+			config->setString(key + "[0]", "");
+		}
+		else
+		{
+			for (size_t i = 0; i < values.size(); ++i)
 			setIpAddress(config, key + "[" + std::to_string(i) + "]", values[i]);
+		}
 	}
 }

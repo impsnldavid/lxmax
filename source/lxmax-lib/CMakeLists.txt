@@ -37,6 +37,7 @@ set( HEADER_FILES
 )
 
 set( SOURCE_FILES
+	config_helpers.cpp
 	dmx_output_service.cpp
 	dmx_universe_config.cpp
 	fixture.cpp

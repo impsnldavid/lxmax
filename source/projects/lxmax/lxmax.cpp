@@ -158,15 +158,15 @@ class lxmax_service : public object<lxmax_service>
 					switch(max::atom_gettype(argv + j))
 					{
 						case max::A_LONG:
-							config->setInt("[" + std::to_string(j) + "]", max::atom_getlong(argv + j));
+							view->setInt("[" + std::to_string(j) + "]", max::atom_getlong(argv + j));
 							break;
 
 						case max::A_FLOAT:
-							config->setDouble("[" + std::to_string(j) + "]", max::atom_getfloat(argv + j));
+							view->setDouble("[" + std::to_string(j) + "]", max::atom_getfloat(argv + j));
 							break;
 
 						case max::A_SYM:
-							config->setString("[" + std::to_string(j) + "]", max::atom_getsym(argv + j)->s_name);
+							view->setString("[" + std::to_string(j) + "]", max::atom_getsym(argv + j)->s_name);
 							break;
 					}
 				}
@@ -469,37 +469,42 @@ public:
 
 			const auto artnet_adapter_address = _preferences_manager->get_global_config().artnet_network_adapter;
 			const auto sacn_adapter_address = _preferences_manager->get_global_config().sacn_network_adapter;
+
+
+			bool is_artnet_adapter_found = false;
+			bool is_sacn_adapter_found = false;
 			
-			try
+			for (const auto& nic : list)
 			{
-				if (!artnet_adapter_address.isWildcard())
-					Poco::Net::NetworkInterface::forAddress(artnet_adapter_address);
-			}
-			catch(const Poco::Net::InterfaceNotFoundException& ex)
-			{
-				dict missing_adapter;
-				missing_adapter["name"] = "Art-Net Adapter Not Found";
-				missing_adapter["address"] = artnet_adapter_address.toString();
-				max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-3)), missing_adapter);
+				if (nic.address() == artnet_adapter_address)
+					is_artnet_adapter_found = true;
+
+				if (nic.address() == sacn_adapter_address)
+					is_sacn_adapter_found = true;
 			}
 
-			try
-			{
-				if (!sacn_adapter_address.isWildcard())
-					Poco::Net::NetworkInterface::forAddress(sacn_adapter_address);
-			}
-			catch(const Poco::Net::InterfaceNotFoundException& ex)
+			if (!artnet_adapter_address.isWildcard() && !is_artnet_adapter_found)
 			{
 				dict missing_adapter;
-				missing_adapter["name"] = "sACN Adapter Not Found";
+				missing_adapter["name"] = "[Art-Net Adapter Not Found]";
+				missing_adapter["address"] = artnet_adapter_address.toString();
+				max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-3)),
+				                                 missing_adapter);
+			}
+
+			if (!sacn_adapter_address.isWildcard() && !is_sacn_adapter_found)
+			{
+				dict missing_adapter;
+				missing_adapter["name"] = "[sACN Adapter Not Found]";
 				missing_adapter["address"] = sacn_adapter_address.toString();
-				max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-2)), missing_adapter);
+				max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-2)),
+				                                 missing_adapter);
 			}
 			
-            dict no_adapter;
-        	no_adapter["name"] = "All Adapters";
-			no_adapter["address"] = Poco::Net::IPAddress().toString();
-            max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-1)), no_adapter);
+            dict all_adapters;
+        	all_adapters["name"] = "All Adapters";
+			all_adapters["address"] = Poco::Net::IPAddress().toString();
+            max::dictionary_appenddictionary(network_adapters, symbol(static_cast<int>(-1)), all_adapters);
         	
         	for(const auto& n : list)
             {
