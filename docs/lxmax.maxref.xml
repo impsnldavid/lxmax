@@ -29,6 +29,11 @@
 
 	<methodlist>
 
+		<method name='get_version'>
+			<digest>Returns a symbol with the current LXMax service version </digest>
+			<description>Returns a symbol with the current LXMax service version </description>
+		</method>
+
 		<method name='get_global_preferences'>
 			<digest>Gets a dictionary containing the global preferences </digest>
 			<description>Gets a dictionary containing the global preferences </description>
@@ -59,14 +64,14 @@
 			<description>Quickly add a number of universes to the configuration </description>
 		</method>
 
-		<method name='get_universe_preferences'>
-			<digest>Gets a dictionary containing a specified universe's preferences </digest>
-			<description>Gets a dictionary containing a specified universe's preferences </description>
-		</method>
-
 		<method name='set_global_preferences'>
 			<digest>Sets the current global preferences to values from a dictionary </digest>
 			<description>Sets the current global preferences to values from a dictionary </description>
+		</method>
+
+		<method name='get_universe_preferences'>
+			<digest>Gets a dictionary containing a specified universe's preferences </digest>
+			<description>Gets a dictionary containing a specified universe's preferences </description>
 		</method>
 
 		<method name='set_universe_preferences'>

@@ -252,6 +252,14 @@ public:
 			max::object_unregister(_registered_obj);
 	}
 
+	message<> get_version {
+		this, "get_version", "Returns a symbol with the current LXMax service version", message_type::gimmeback,
+		MIN_FUNCTION
+		{
+			return { symbol(lxmax::GIT_VERSION_STR) };
+		}
+	};
+	
 	message<> add_universe {
 		this, "add_universe", "Adds a universe to the configuration",
 		MIN_FUNCTION

@@ -11,7 +11,8 @@ namespace lxmax
 {
 	#pragma pack(push, 1)
 
-	/// An explicitly big endian uint16_t
+	/// @brief An explicitly big endian uint16_t
+	///
 	struct uint16_t_be
 	{
 		uint8_t bytes[2];
@@ -31,7 +32,8 @@ namespace lxmax
     };
 
 	
-	/// An explicitly big endian uint32_t
+	/// @brief An explicitly big endian uint32_t
+	///
 	struct uint32_t_be
 	{
 		uint8_t bytes[4];

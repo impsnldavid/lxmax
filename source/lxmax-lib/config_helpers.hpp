@@ -5,62 +5,24 @@
 
 #pragma once
 
-#include <Poco/JSON/Array.h>
 #include <vector>
 #include <Poco/Util/AbstractConfiguration.h>
 #include <Poco/Net/IPAddress.h>
 
 namespace lxmax::config_helpers
 {
-	std::vector<std::string> getArray(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config,
+	std::vector<std::string> get_array(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config,
 	                                  const std::string& key);
 
-	inline Poco::Net::IPAddress getIpAddress(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config, const std::string& key)
-	{
-		Poco::Net::IPAddress value;
-		const std::string raw_value = config->getString(key);
+	Poco::Net::IPAddress get_ip_address(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config,
+	                                         const std::string& key);
 
-		if (!Poco::Net::IPAddress::tryParse(raw_value, value))
-			throw Poco::SyntaxException("Cannot convert to IPAddress", raw_value);
+	void set_ip_address(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config, const std::string& key,
+	                         const Poco::Net::IPAddress& value);;
 
-		return value;
-	}
+	std::vector<Poco::Net::IPAddress> get_ip_address_vector(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config,
+	                                                     const std::string& key);
 
-	inline void setIpAddress(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config, const std::string& key,
-	                         const Poco::Net::IPAddress& value)
-	{
-		config->setString(key, value.toString());
-	};
-
-	inline std::vector<Poco::Net::IPAddress> getIpAddressVector(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config,
-	                                                            const std::string& key)
-	{
-		std::vector<Poco::Net::IPAddress> values;
-		std::vector<std::string> keys;
-
-		for (const auto& raw_value : getArray(config, key))
-		{
-			Poco::Net::IPAddress value;
-			if (!Poco::Net::IPAddress::tryParse(raw_value, value))
-				throw Poco::SyntaxException("Cannot convert to IPAddress", raw_value);
-			
-			values.push_back(value);
-		}
-
-		return values;
-	}
-
-	inline void setIpAddressVector(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config, const std::string& key,
-	                               const std::vector<Poco::Net::IPAddress>& values)
-	{
-		if (values.empty())
-		{
-			config->setString(key + "[0]", "");
-		}
-		else
-		{
-			for (size_t i = 0; i < values.size(); ++i)
-			setIpAddress(config, key + "[" + std::to_string(i) + "]", values[i]);
-		}
-	}
+	void set_ip_address_vector(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config, const std::string& key,
+	                        const std::vector<Poco::Net::IPAddress>& values);
 }

@@ -257,7 +257,7 @@ namespace lxmax
 			fire_global_config_changed();
 		}
 
-		void set_global_config(Poco::AutoPtr<Poco::Util::AbstractConfiguration> config)
+		void set_global_config(const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config)
 		{
 			try
 			{
@@ -308,7 +308,7 @@ namespace lxmax
 			fire_universe_config_changed();
 		}
 		
-		void set_universe_config(int index, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config)
+		void set_universe_config(int index, const Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config)
 		{
 			try
 			{

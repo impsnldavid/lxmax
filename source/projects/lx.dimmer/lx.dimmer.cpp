@@ -3,6 +3,7 @@
 /// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
+#include "version_info.hpp"
 #include "c74_min.h"
 #include "fixture.hpp"
 #include "precision_helpers.hpp"
@@ -165,8 +166,8 @@ public:
         if (!maxobj())
 			return;
 		
-        _lxmax_service = get_lxmax_service();
-        _fixture_manager = get_fixture_manager(_lxmax_service);
+        _lxmax_service = get_lxmax_service_and_check_version(maxobj(), lxmax::GIT_VERSION_STR);
+        _fixture_manager = get_fixture_manager(maxobj(), _lxmax_service);
 
 		update_range(attr_input_range, attr_precision);
     }

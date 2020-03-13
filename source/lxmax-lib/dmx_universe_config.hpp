@@ -158,10 +158,12 @@ namespace lxmax
 							bool is_first = true;
 							for(const auto& a : unicast_addresses)
 							{
-								s << a.toString();
-								is_first = false;
 								if (!is_first)
 									s << ", ";
+								
+								s << a.toString();
+								
+								is_first = false;
 							}
 						}
 					}
@@ -185,10 +187,12 @@ namespace lxmax
 							bool is_first = true;
 							for(const auto& a : unicast_addresses)
 							{
-								s << a.toString();
-								is_first = false;
 								if (!is_first)
 									s << ", ";
+								
+								s << a.toString();
+
+								is_first = false;
 							}
 						}
 					}		
@@ -214,7 +218,7 @@ namespace lxmax
 
 			is_use_global_destination = config->getBool(key_is_use_global_destination);
 			is_broadcast_or_multicast = config->getBool(key_is_broadcast_or_multicast);
-			unicast_addresses = config_helpers::getIpAddressVector(config, key_unicast_addresses);
+			unicast_addresses = config_helpers::get_ip_address_vector(config, key_unicast_addresses);
 		}
 
 		void write_to_configuration(Poco::AutoPtr<Poco::Util::AbstractConfiguration>& config) const override
@@ -231,7 +235,7 @@ namespace lxmax
 
 			config->setBool(key_is_use_global_destination, is_use_global_destination);
 			config->setBool(key_is_broadcast_or_multicast, is_broadcast_or_multicast);
-			config_helpers::setIpAddressVector(config, key_unicast_addresses, unicast_addresses);
+			config_helpers::set_ip_address_vector(config, key_unicast_addresses, unicast_addresses);
 		}
 	};
 

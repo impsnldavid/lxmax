@@ -43,14 +43,14 @@ namespace lxmax
 			framerate = config->getInt(key_framerate);
 			is_allow_nondmx_framerate = config->getBool(key_is_allow_nondmx_framerate);
 			
-			artnet_network_adapter = config_helpers::getIpAddress(config, key_artnet_network_adapter);
+			artnet_network_adapter = config_helpers::get_ip_address(config, key_artnet_network_adapter);
 			is_artnet_global_destination_broadcast = config->getBool(key_is_artnet_global_destination_broadcast);
-			artnet_global_destination_unicast_addresses = config_helpers::getIpAddressVector(config, key_artnet_global_destination_unicast_addresses);
+			artnet_global_destination_unicast_addresses = config_helpers::get_ip_address_vector(config, key_artnet_global_destination_unicast_addresses);
 			is_send_artnet_sync_packets = config->getBool(key_is_send_artnet_sync_packets);
 			
-			sacn_network_adapter = config_helpers::getIpAddress(config, key_sacn_network_adapter);
+			sacn_network_adapter = config_helpers::get_ip_address(config, key_sacn_network_adapter);
 			is_sacn_global_destination_multicast = config->getBool(key_is_sacn_global_destination_multicast);
-			sacn_global_destination_unicast_addresses = config_helpers::getIpAddressVector(config, key_sacn_global_destination_unicast_addresses);
+			sacn_global_destination_unicast_addresses = config_helpers::get_ip_address_vector(config, key_sacn_global_destination_unicast_addresses);
 			is_send_sacn_sync_packets = config->getBool(key_is_send_sacn_sync_packets);
 			sacn_sync_address = config->getInt(key_sacn_sync_address);
 		}
@@ -62,14 +62,14 @@ namespace lxmax
 			config->setInt(key_framerate, framerate);
 			config->setBool(key_is_allow_nondmx_framerate, is_allow_nondmx_framerate);
 
-			config_helpers::setIpAddress(config, key_artnet_network_adapter, artnet_network_adapter);
+			config_helpers::set_ip_address(config, key_artnet_network_adapter, artnet_network_adapter);
 			config->setBool(key_is_artnet_global_destination_broadcast, is_artnet_global_destination_broadcast);
-			config_helpers::setIpAddressVector(config, key_artnet_global_destination_unicast_addresses, artnet_global_destination_unicast_addresses);
+			config_helpers::set_ip_address_vector(config, key_artnet_global_destination_unicast_addresses, artnet_global_destination_unicast_addresses);
 			config->setBool(key_is_send_artnet_sync_packets, is_send_artnet_sync_packets);
 
-			config_helpers::setIpAddress(config, key_sacn_network_adapter, sacn_network_adapter);
+			config_helpers::set_ip_address(config, key_sacn_network_adapter, sacn_network_adapter);
 			config->setBool(key_is_sacn_global_destination_multicast, is_sacn_global_destination_multicast);
-			config_helpers::setIpAddressVector(config, key_sacn_global_destination_unicast_addresses, sacn_global_destination_unicast_addresses);
+			config_helpers::set_ip_address_vector(config, key_sacn_global_destination_unicast_addresses, sacn_global_destination_unicast_addresses);
 			config->setBool(key_is_send_sacn_sync_packets, is_send_sacn_sync_packets);
 			config->setInt(key_sacn_sync_address, sacn_sync_address);
 		}

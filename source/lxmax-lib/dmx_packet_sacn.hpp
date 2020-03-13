@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <vector>
-#include <string.h>
+#include <string>
 #include <Poco/UUID.h>
 #include <Poco/Net/IPAddress.h>
 
