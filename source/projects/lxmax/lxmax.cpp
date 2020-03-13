@@ -41,7 +41,7 @@ class lxmax_service : public object<lxmax_service>
 		{ "Protocol / Device", 155, atoms { "Art-Net", "sACN", "None" } },
 		{ "Internal Universe", 90, 1, 63999 },
 		{ "Protocol Universe", 90, 1, 63999 },
-		{ "Settings", 200, column_type::_static }
+		{ "Settings", 250, column_type::_static }
 	};
 
 	dict_edit _universes_editor { k_universes_dict_name, k_editor_columns };
@@ -433,7 +433,7 @@ public:
 		MIN_FUNCTION
 		{
 			const symbol dict_name(args[0]);
-			const dict dict (dict_name);
+			const dict dict(dict_name);
 			_preferences_manager->set_global_config(dict_to_json(dict));
 			
 			return { };
@@ -460,8 +460,11 @@ public:
 		this, "set_universe_preferences", "Sets the preferences for a specified universe to values from a dictionary",
 		MIN_FUNCTION
 		{
-			const dict dict (args[1]);
+			const symbol dict_name(args[1]);
+			const dict dict(dict_name);
 			_preferences_manager->set_universe_config(args[0], dict_to_json(dict));
+
+			update_editor_from_universes_config();
 			
 			return { };
 		}

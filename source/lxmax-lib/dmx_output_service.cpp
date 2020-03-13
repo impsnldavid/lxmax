@@ -103,12 +103,12 @@ namespace lxmax
 
 		const auto& universes = reinterpret_cast<const preferences_manager*>(pSender)->get_universe_configs();
 
-		_configs.clear();
+		_universe_configs.clear();
 
 		for (const auto& u : universes)
 		{
 			if (u.second->is_enabled && u.second->universe_type() == dmx_universe_type::output)
-				_configs.push_back(*dynamic_cast<dmx_output_universe_config*>(u.second.get()));
+				_universe_configs.push_back(*dynamic_cast<dmx_output_universe_config*>(u.second.get()));
 		}
 	}
 
@@ -130,7 +130,7 @@ namespace lxmax
 		bool is_artnet_packet_sent = false;
 		bool is_sacn_packet_sent = false;
 		
-		for (const auto& config : _configs)
+		for (const auto& config : _universe_configs)
 		{
 			if (!is_full_update)
 			{
@@ -145,7 +145,9 @@ namespace lxmax
 
 			std::vector<char> buffer;
 
-			switch (config.protocol)
+			try
+			{
+				switch (config.protocol)
 			{
 			case dmx_protocol::artnet:
 				{
@@ -249,6 +251,12 @@ namespace lxmax
 
 			default:
 				break;
+			}
+			}
+			catch(const Poco::Net::NetException& ex)
+			{
+				// TODO: Can't log to Max from this thread, implement a logging system based off a Max timer
+				//poco_error(_log, "Failed to send DMX data for internal universe %hu - %s", config.internal_universe, ex.message());
 			}
 		}
 

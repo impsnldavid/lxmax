@@ -48,7 +48,7 @@ namespace lxmax
 		universe_updated_set _updated_universes;
 
 		std::mutex _config_mutex;
-		std::vector<dmx_output_universe_config> _configs;
+		std::vector<dmx_output_universe_config> _universe_configs;
 
 		const std::string _system_name;
 		const Poco::UUID _system_id;

@@ -147,7 +147,7 @@ public:
 			max::t_symbol* name = nullptr;
 			dictobj_register(d, &name);
 
-			dump_outlet.send({ symbol("global_preferences"), symbol("dictionary"), name });
+			dump_outlet.send({ symbol("universe_preferences"), symbol("dictionary"), name });
 
 			return { };
 		}
@@ -166,11 +166,11 @@ public:
 			}
 
 			max::t_atom argv[2];
-			max::atom_setsym(argv, args[0]);
-			max::atom_setlong(argv + 1, args[1]);
+			max::atom_setlong(argv, args[0]);
+			max::atom_setsym(argv + 1, args[2]);
 
 			max::t_atom rv;
-			max::object_method_typed(_lxmax_service, symbol("set_global_preferences"), 2, argv, &rv);
+			max::object_method_typed(_lxmax_service, symbol("set_universe_preferences"), 2, argv, &rv);
 
 			return { };
 		}
