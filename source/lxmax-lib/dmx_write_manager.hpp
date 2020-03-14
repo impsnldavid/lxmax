@@ -14,5 +14,12 @@ namespace lxmax
 	class dmx_write_manager
 	{
 		universe_buffer_map _universe_buffers;
+		universe_updated_list _universe_updated;
+
+	public:
+		universe_buffer_map& get_data()
+		{
+			return _universe_buffers;
+		}
 	};
 }

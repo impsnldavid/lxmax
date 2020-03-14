@@ -13,7 +13,7 @@
 	<!--METADATA-->
 
 	<metadatalist>
-		<metadata name='author'>David Butler / The Impersonal Stereo </metadata>
+		<metadata name='author'>David Butler </metadata>
 		<metadata name='tag'>lxmax</metadata>
 	</metadatalist>
 
@@ -100,7 +100,7 @@
 		<seealso name='lx.config' />
 		<seealso name='lx.dimmer' />
 		<seealso name='lx.colorfixture' />
-		<seealso name='lx.dmxwrite' />
+		<seealso name='lx.raw.write' />
 	</seealsolist>
 
 

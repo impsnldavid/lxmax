@@ -38,7 +38,7 @@ namespace lxmax
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 
-		universe_updated_set updated_universes;
+		universe_updated_list updated_universes;
 
 		std::set<fixture_map_entry, fixture_last_updated_compare> sorted_fixtures(_fixtures.begin(), _fixtures.end());
 

@@ -38,7 +38,7 @@ namespace lxmax
 	using universe_buffer = std::array<dmx_value, k_universe_length>;
 	using universe_buffer_map = std::map<universe_address, universe_buffer>;
 	using universe_buffer_map_entry = std::pair<universe_address, universe_buffer>;
-	using universe_updated_set = std::unordered_set<universe_address>;
+	using universe_updated_list = std::vector<universe_address>;
 
 	using clock = std::chrono::high_resolution_clock;
 	using timestamp = clock::time_point;

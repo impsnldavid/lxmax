@@ -15,7 +15,7 @@ using namespace min;
 
 class lx_config : public object<lx_config>
 {
-	max::t_object* _lxmax_service;
+	instance _lxmax_service { };
 
 public:
 	MIN_DESCRIPTION { "Configure the LXMax service." };
@@ -28,7 +28,7 @@ public:
 		if (!maxobj())
 			return;
 		
-		_lxmax_service = get_lxmax_service_and_check_version(maxobj(), lxmax::GIT_VERSION_STR);
+		_lxmax_service = get_lxmax_service_and_check_version(*this, lxmax::GIT_VERSION_STR);
 	}
 
 	inlet<> input { this, "lx.config" };
@@ -41,7 +41,7 @@ public:
 		{
 			max::t_atom rv { };
 			object_method_typed(_lxmax_service, symbol("add_universe"), 0, nullptr, &rv);
-
+			
 			return { };
 		}
 	};

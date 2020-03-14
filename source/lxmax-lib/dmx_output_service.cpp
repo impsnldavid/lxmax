@@ -115,6 +115,8 @@ namespace lxmax
 	void dmx_output_service::on_timer(Poco::Timer& timer)
 	{
 		// TODO: Calculate full update time per universe
+
+		const auto universe_buffers = _write_manager->get_data();
 		
 		bool is_full_update = false;
 
@@ -134,13 +136,14 @@ namespace lxmax
 		{
 			if (!is_full_update)
 			{
-				if (_updated_universes.find(config.internal_universe) == std::end(_updated_universes))
+				if (std::find(std::begin(_updated_universes), std::end(_updated_universes), config.internal_universe) 
+					== std::end(_updated_universes))
 					continue;
 			}
 
-			const auto it = _universe_buffers.find(config.internal_universe);
+			const auto it = universe_buffers.find(config.internal_universe);
 
-			if (it == std::end(_universe_buffers))
+			if (it == std::end(universe_buffers))
 				continue;
 
 			std::vector<char> buffer;

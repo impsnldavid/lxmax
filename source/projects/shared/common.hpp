@@ -15,34 +15,32 @@ namespace lxmax
 
 const c74::min::symbol k_lxmax_service_registration { "___lxmax_service" };
 
-inline c74::max::t_object* get_lxmax_service(c74::max::t_object* x)
+inline c74::min::instance get_lxmax_service(c74::min::object_base& x)
 {
 	c74::max::t_object* lxmax_service_obj = static_cast<c74::max::t_object*>(c74::max::object_findregistered(
 		c74::min::symbol("nobox"), k_lxmax_service_registration));
-
+	
 	if (lxmax_service_obj == nullptr)
 	{
 		assert(false);
 		c74::max::object_error(x,"Failed to get reference to LXMax service. Please delete the LXMax package and reinstall.");
 	}
    
-
 	return lxmax_service_obj;
 }
 
-inline bool version_check(c74::max::t_object* x, c74::max::t_object* lxmax_service_obj, const std::string& this_assembly_version)
+inline bool version_check(c74::min::object_base& x, c74::min::instance& lxmax_service, const std::string& this_assembly_version)
 {
-	c74::max::t_atom rv;
-	c74::max::object_method_typed(lxmax_service_obj, c74::max::gensym("get_version"), 0, nullptr, &rv);
+	const c74::min::atom version = lxmax_service(c74::min::symbol("get_version"), 0);
 
-	assert(c74::max::atom_gettype(&rv) == c74::max::A_SYM);
+	assert(version.type() == c74::min::message_type::symbol_argument);
 
-	if(c74::max::atom_getsym(&rv) != c74::max::gensym(this_assembly_version.c_str()))
+	if(version != c74::min::symbol(this_assembly_version))
 	{
 		assert(false);
 		c74::max::object_error(x, 
 			"Object (%s) has mismatching version number with currently running LXMax service (%s). Please delete the LXMax package and reinstall.",
-			 c74::max::atom_getsym(&rv)->s_name, this_assembly_version.c_str());
+			 std::string(version).c_str(), this_assembly_version.c_str());
 		return false;
 	}
 	else
@@ -51,24 +49,23 @@ inline bool version_check(c74::max::t_object* x, c74::max::t_object* lxmax_servi
 	}
 }
 
-inline c74::max::t_object* get_lxmax_service_and_check_version(c74::max::t_object* x, const std::string& this_assembly_version)
+inline c74::min::instance get_lxmax_service_and_check_version(c74::min::object_base& x, const std::string& this_assembly_version)
 {
-	c74::max::t_object* lxmax_service_obj = get_lxmax_service(x);
+	c74::min::instance lxmax_service = get_lxmax_service(x);
 
-	if (version_check(x, lxmax_service_obj, this_assembly_version))
-		return lxmax_service_obj;
+	if (version_check(x, lxmax_service, this_assembly_version))
+		return lxmax_service;
 	else
 		return nullptr;
 }
 
-inline std::shared_ptr<lxmax::fixture_manager> get_fixture_manager(c74::max::t_object* x, c74::max::t_object* lxmax_service_obj)
+inline std::shared_ptr<lxmax::fixture_manager> get_fixture_manager(c74::min::object_base& x, c74::min::instance& lxmax_service)
 {
-	assert(lxmax_service_obj);
+	assert(lxmax_service);
 
-	c74::max::t_atom rv;
-	c74::max::object_method_typed(lxmax_service_obj, c74::max::gensym("get_fixture_manager"), 0, nullptr, &rv);
+	void* value = lxmax_service(c74::min::symbol("get_fixture_manager"), 0);
 
-	std::shared_ptr<lxmax::fixture_manager>* fixture_manager_ptr = static_cast<std::shared_ptr<lxmax::fixture_manager>*>(c74::max::atom_getobj(&rv));
+	std::shared_ptr<lxmax::fixture_manager>* fixture_manager_ptr = static_cast<std::shared_ptr<lxmax::fixture_manager>*>(value);
 	if (fixture_manager_ptr == nullptr)
 	{
 		assert(false);

@@ -52,7 +52,7 @@ enum_map lx_dimmer_priority_info {
 
 class lx_dimmer : public object<lx_dimmer>, public lxmax::fixture {
 
-	max::t_object* _lxmax_service { nullptr };
+	instance _lxmax_service { };
 	
 	std::mutex _value_mutex;
     atoms _values;
@@ -167,8 +167,8 @@ public:
         if (!maxobj())
 			return;
 		
-        _lxmax_service = get_lxmax_service_and_check_version(maxobj(), lxmax::GIT_VERSION_STR);
-		set_manager(get_fixture_manager(maxobj(), _lxmax_service));
+        _lxmax_service = get_lxmax_service_and_check_version(*this, lxmax::GIT_VERSION_STR);
+		set_manager(get_fixture_manager(*this, _lxmax_service));
 		
 		update_range(attr_input_range, attr_precision);
     }
@@ -288,14 +288,14 @@ public:
 	
 
 	bool write_to_buffer(const lxmax::fixture_patch_info& patch_info, lxmax::universe_buffer_map& buffer_map,
-	                     lxmax::universe_updated_set& updated_universes, bool is_force) override
+	                     lxmax::universe_updated_list& updated_universes, bool is_force) override
     {
 	    if (!is_force && !is_updated())
 			return false;
 		
 	    const lxmax::universe_address universe = patch_info.channel_range.start_universe();
     	
-    	updated_universes.insert(universe);
+    	updated_universes.push_back(universe);
 
 	    const auto it = buffer_map.find(universe);
 

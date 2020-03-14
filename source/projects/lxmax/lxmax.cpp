@@ -49,8 +49,10 @@ class lxmax_service : public object<lxmax_service>
 	void* _registered_obj = nullptr;
 
 	std::unique_ptr<lxmax::preferences_manager> _preferences_manager;
-	std::unique_ptr<lxmax::dmx_output_service> _dmx_output_service;
 	std::shared_ptr<lxmax::fixture_manager> _fixture_manager;
+	std::shared_ptr<lxmax::dmx_write_manager> _write_manager;
+	std::unique_ptr<lxmax::dmx_output_service> _dmx_output_service;
+	
 
 	static std::string get_preference_path()
 	{
@@ -200,7 +202,7 @@ public:
 	MIN_DESCRIPTION { "LXMax service object." };
 	MIN_TAGS { "lxmax" };
 	MIN_AUTHOR { "David Butler" };
-	MIN_RELATED { "lx.config, lx.dimmer, lx.colorfixture, lx.dmxwrite" };
+	MIN_RELATED { "lx.config, lx.dimmer, lx.colorfixture, lx.raw.write" };
 
 	MIN_FLAGS { behavior_flags::nobox };
 
@@ -224,9 +226,11 @@ public:
 
 		
 		_preferences_manager = std::make_unique<lxmax::preferences_manager>(Poco::Logger::get("Preferences Manager"), get_preference_path()),
-		_dmx_output_service = std::make_unique<lxmax::dmx_output_service>(Poco::Logger::get("DMX Output Service"));
 		_fixture_manager = std::make_shared<lxmax::fixture_manager>();
-
+		_write_manager = std::make_shared<lxmax::dmx_write_manager>();
+		_dmx_output_service = std::make_unique<lxmax::dmx_output_service>(Poco::Logger::get("DMX Output Service"), _write_manager);
+		
+		
 		_preferences_manager->global_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_global_config);
 		_preferences_manager->universe_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_universe_configs);
 		

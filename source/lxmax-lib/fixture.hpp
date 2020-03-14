@@ -39,7 +39,7 @@ namespace lxmax
 
 		void unregister_fixture();
 
-		virtual bool write_to_buffer(const fixture_patch_info& patch_info, universe_buffer_map& buffer_map, universe_updated_set& updated_universes, bool is_force) = 0;
+		virtual bool write_to_buffer(const fixture_patch_info& patch_info, universe_buffer_map& buffer_map, universe_updated_list& updated_universes, bool is_force) = 0;
 
 		void set_updated();
 
