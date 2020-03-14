@@ -18,7 +18,7 @@ The goal of LXMax is to go beyond simple DMX protocol support/hardware communica
 LXMax is still in the development stage and has not yet reached a first release.
 
 - [X] Service extension object, lx.config object and DMX setup window patcher.
-- [ ] Support for Art-Net and sACN protocols.
+- [X] Support for Art-Net and sACN protocols.
 - [ ] Basic working output service and lx.dmxwrite object.
 - [ ] Basic working input service and lx.dmxread object.
 - [ ] lx.dimmer object for dimmer fixture and basic control.
