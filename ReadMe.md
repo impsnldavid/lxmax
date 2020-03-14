@@ -13,6 +13,10 @@ The goal of LXMax is to go beyond simple DMX protocol support/hardware communica
 * Flexible protocol usage. Assign and swap protocols and DMX hardware without making changes to your patch.
 * Multiple patcher merging. If you have multiple patchers open trying to send data to the same fixtures, LXMax will intelligently merge them to a single output data stream.
 
+## Documentation
+
+Available on the [wiki](https://github.com/impsnldavid/lxmax/wiki).
+
 ## Roadmap
 
 LXMax is still in the development stage and has not yet reached a first release.
@@ -41,7 +45,7 @@ LXMax is available under the [MIT License](https://choosealicense.com/licenses/m
 
 ## Dependencies
 * Cycling 74's min-api, part of [min-devkit](https://github.com/Cycling74/min-devkit) for Max (via submodule)
-* [Poco 1.9.4](https://pocoproject.org/) (via Conan)
+* [Poco 1.10.1](https://pocoproject.org/) (via Conan)
 * dict.edit external object (included in repo, thanks to [Timothy Place](https://github.com/tap))
 
 ## Build Instructions
