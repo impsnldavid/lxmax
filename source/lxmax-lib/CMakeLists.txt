@@ -20,6 +20,7 @@ project(lxmax-lib)
 set( HEADER_FILES
 	dmx_channel_range.hpp
 	dmx_universe_config.hpp
+	dmx_write_manager.hpp
 	color_component.hpp
 	color_personality.hpp
 	common.hpp

@@ -1,6 +1,6 @@
 /// @file
 /// @ingroup	lxmax
-/// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #pragma once
@@ -16,6 +16,7 @@ namespace lxmax
 	class fixture
 	{
 		std::shared_ptr<fixture_manager> _manager;
+		fixture_patch_info _patch_info;
 		std::atomic<bool> _is_updated { true };
 		timestamp _last_updated { timestamp::min() };
 
@@ -32,7 +33,11 @@ namespace lxmax
 
 		virtual ~fixture();
 
-		void set_manager(std::shared_ptr<fixture_manager> manager, const fixture_patch_info& patch_info);
+		void set_manager(std::shared_ptr<fixture_manager> manager);
+		
+		void register_fixture(const fixture_patch_info& patch_info);
+
+		void unregister_fixture();
 
 		virtual bool write_to_buffer(const fixture_patch_info& patch_info, universe_buffer_map& buffer_map, universe_updated_set& updated_universes, bool is_force) = 0;
 

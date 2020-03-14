@@ -1,18 +1,26 @@
 /// @file
 /// @ingroup	lxmax
-/// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #include "fixture_manager.hpp"
+
+#include <set>
+
 #include "fixture.hpp"
 
 namespace lxmax
 {
+	bool fixture_last_updated_compare::operator()(const fixture_map_entry& lhs, const fixture_map_entry& rhs) const
+	{
+		return lhs.first->last_updated() < rhs.first->last_updated();
+	}
+
 	void fixture_manager::register_fixture(fixture* fixture, const fixture_patch_info& patch_info)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 
-		_fixtures.insert(std::make_pair(fixture, patch_info));
+		_fixtures.insert(std::make_pair(fixture, fixture_info(patch_info)));
 
 		update_fixture_overlaps();
 	}
@@ -32,27 +40,21 @@ namespace lxmax
 
 		universe_updated_set updated_universes;
 
-		std::vector<fixture_map_entry> sorted_fixtures;
-		sorted_fixtures.reserve(_fixtures.size());
-		std::copy(_fixtures.begin(), _fixtures.end(), std::back_inserter(sorted_fixtures));
+		std::set<fixture_map_entry, fixture_last_updated_compare> sorted_fixtures(_fixtures.begin(), _fixtures.end());
 
-		std::sort(sorted_fixtures.begin(), sorted_fixtures.end(), 
-			[](const fixture_map_entry& x, const fixture_map_entry& y){ return x.first->last_updated() > y.first->last_updated(); });
-
-		std::unordered_set<fixture*> fixtures_written_to_buffer;
+		std::vector<fixture*> fixtures_written_to_buffer;
 		
-		for (fixture_map_entry entry : sorted_fixtures)
+		for (const fixture_map_entry& entry : sorted_fixtures)
 		{
-			auto it = _fixture_overlaps.find(entry.first);
-			assert(it != std::end(_fixture_overlaps));
-
 			bool can_write = true;
 
-			if (!entry.second.is_htp)
+			if (!entry.second.patch_info.is_htp)
 			{
-				for (fixture* overlapping_fixture : it->second)
+				for (fixture* overlapping_fixture : entry.second.overlaps)
 				{
-					if (fixtures_written_to_buffer.find(overlapping_fixture) != std::end(fixtures_written_to_buffer))
+					auto it = std::find(fixtures_written_to_buffer.begin(), 
+						fixtures_written_to_buffer.end(), overlapping_fixture);
+					if (it != std::end(fixtures_written_to_buffer))
 					{
 						can_write = false;
 						break;
@@ -63,9 +65,9 @@ namespace lxmax
 			if (!can_write)
 				break;
 			
-			const bool did_write = entry.first->write_to_buffer(entry.second, buffers, updated_universes, is_force);
+			const bool did_write = entry.first->write_to_buffer(entry.second.patch_info, buffers, updated_universes, is_force);
 			if (did_write)
-				fixtures_written_to_buffer.insert(entry.first);
+				fixtures_written_to_buffer.push_back(entry.first);
 		}
 	}
 
@@ -73,22 +75,18 @@ namespace lxmax
 	{
 		// TODO: Create more efficient versions of this for registering and unregistering fixtures
 		
-		_fixture_overlaps.clear();
-		
-		for (const auto& entry : _fixtures)
+		for (auto& entry : _fixtures)
 		{
-			std::unordered_set<fixture*> overlapping_fixtures;
+			entry.second.overlaps.clear();
 			
 			for (const auto& other_entry : _fixtures)
 			{
 				if (entry.first == other_entry.first)
 					continue;
 
-				if (entry.second.channel_range.is_overlapping_with(other_entry.second.channel_range))
-					overlapping_fixtures.insert(other_entry.first);
+				if (entry.second.patch_info.channel_range.is_overlapping_with(other_entry.second.patch_info.channel_range))
+					entry.second.overlaps.push_back(other_entry.first);
 			}
-
-			_fixture_overlaps.insert(std::make_pair(entry.first, overlapping_fixtures));
 		}
 	}
 }

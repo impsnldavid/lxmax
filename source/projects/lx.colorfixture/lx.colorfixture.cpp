@@ -13,7 +13,7 @@ class lx_colorfixture : public object<lx_colorfixture> {
 public:
 	MIN_DESCRIPTION	{"Send DMX control data to one or more dimmers."};
 	MIN_TAGS		{"lxmax"};
-	MIN_AUTHOR		{"David Butler / The Impersonal Stereo"};
+	MIN_AUTHOR		{"David Butler"};
 	MIN_RELATED		{""};
 
 	inlet<>  input	{ this, "lx.colorfixture" };

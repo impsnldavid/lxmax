@@ -1,6 +1,6 @@
 /// @file
 /// @ingroup	lxmax
-/// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #pragma once
@@ -15,6 +15,13 @@ namespace lxmax
 		channel_address _end;
 
 	public:
+
+		dmx_channel_range()
+			: _start(0),
+			_end(0)
+		{
+			
+		}
 		
 		dmx_channel_range(universe_address universe, int channel_count)
 			: _start(universe * k_universe_length),
@@ -62,6 +69,11 @@ namespace lxmax
 		bool is_overlapping_with(const dmx_channel_range& other) const
 		{
 			return _start <= other._end && other._start <= _end;
+		}
+
+		bool is_empty() const
+		{
+			return _start == 0 && _end == 0;
 		}
 	};
 }

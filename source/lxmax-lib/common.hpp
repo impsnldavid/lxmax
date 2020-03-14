@@ -1,6 +1,6 @@
 /// @file
 /// @ingroup	lxmax
-/// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 
@@ -18,7 +18,7 @@ namespace lxmax
 {
 	const int k_universe_length = 512;
 	const int k_universe_min = 1;
-	const int k_universe_max = 65535;
+	const int k_universe_max = 63999;
 	const int k_universe_artnet_min = 0;
 	const int k_universe_artnet_max = 32767;
 	const int k_universe_sacn_min = 1;

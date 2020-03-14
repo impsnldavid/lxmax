@@ -1,6 +1,6 @@
 /// @file
 /// @ingroup	lxmax
-/// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #include "version_info.hpp"
@@ -14,7 +14,7 @@ using namespace c74::min;
 class lx_dmxwrite : public object<lx_dmxwrite>, public lxmax::fixture {
 
 	c74::max::t_object* _lxmax_service;
-	lxmax::fixture_manager* _fixture_manager;
+	std::shared_ptr<lxmax::fixture_manager> _fixture_manager;
 	
 	std::mutex _value_mutex;
     atoms _values;
@@ -25,7 +25,7 @@ public:
 
 	MIN_DESCRIPTION	{"Write raw DMX data to an LXMax universe"};
 	MIN_TAGS		{"lxmax"};
-	MIN_AUTHOR		{"David Butler / The Impersonal Stereo"};
+	MIN_AUTHOR		{"David Butler"};
 	MIN_RELATED		{"lx.dmxread"};
 
 	inlet<>  input	{ this, "(list) list of dimmer values" };

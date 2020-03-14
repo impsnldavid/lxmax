@@ -5,17 +5,14 @@
 
 #pragma once
 
-#include "color_component.hpp"
+#include "common.hpp"
 
 namespace lxmax
 {
-	struct color_personality_element
+	/// @brief Manages writing DMX to universe buffers
+	/// 
+	class dmx_write_manager
 	{
-		color_component component;
-		value_precision precision;
+		universe_buffer_map _universe_buffers;
 	};
-
-	using color_personality = std::vector<color_personality_element>;
-
-
 }

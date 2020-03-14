@@ -1,6 +1,6 @@
 /// @file
 /// @ingroup	lxmax
-/// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #include "version_info.hpp"
@@ -50,7 +50,7 @@ class lxmax_service : public object<lxmax_service>
 
 	std::unique_ptr<lxmax::preferences_manager> _preferences_manager;
 	std::unique_ptr<lxmax::dmx_output_service> _dmx_output_service;
-	std::unique_ptr<lxmax::fixture_manager> _fixture_manager;
+	std::shared_ptr<lxmax::fixture_manager> _fixture_manager;
 
 	static std::string get_preference_path()
 	{
@@ -199,7 +199,7 @@ class lxmax_service : public object<lxmax_service>
 public:
 	MIN_DESCRIPTION { "LXMax service object." };
 	MIN_TAGS { "lxmax" };
-	MIN_AUTHOR { "David Butler / The Impersonal Stereo" };
+	MIN_AUTHOR { "David Butler" };
 	MIN_RELATED { "lx.config, lx.dimmer, lx.colorfixture, lx.dmxwrite" };
 
 	MIN_FLAGS { behavior_flags::nobox };
@@ -225,7 +225,7 @@ public:
 		
 		_preferences_manager = std::make_unique<lxmax::preferences_manager>(Poco::Logger::get("Preferences Manager"), get_preference_path()),
 		_dmx_output_service = std::make_unique<lxmax::dmx_output_service>(Poco::Logger::get("DMX Output Service"));
-		_fixture_manager = std::make_unique<lxmax::fixture_manager>();
+		_fixture_manager = std::make_shared<lxmax::fixture_manager>();
 
 		_preferences_manager->global_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_global_config);
 		_preferences_manager->universe_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_universe_configs);
@@ -408,7 +408,7 @@ public:
 		this, "get_fixture_manager", "Gets a pointer to the fixture manager", message_type::gimmeback,
 		MIN_FUNCTION
 		{
-			max::t_object* obj = (max::t_object*)_fixture_manager.get();
+			const auto obj = reinterpret_cast<max::t_object*>(&_fixture_manager);
 			
 			return { obj };
 		}

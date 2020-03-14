@@ -1,6 +1,6 @@
 /// @file
 /// @ingroup	lxmax
-/// @copyright	Copyright 2020 David Butler / The Impersonal Stereo. All rights reserved.
+/// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #include "version_info.hpp"
@@ -52,8 +52,7 @@ enum_map lx_dimmer_priority_info {
 
 class lx_dimmer : public object<lx_dimmer>, public lxmax::fixture {
 
-	max::t_object* _lxmax_service;
-	lxmax::fixture_manager* _fixture_manager;
+	max::t_object* _lxmax_service { nullptr };
 	
 	std::mutex _value_mutex;
     atoms _values;
@@ -150,25 +149,27 @@ class lx_dimmer : public object<lx_dimmer>, public lxmax::fixture {
 				_precision_width = 4;
                 break;
         }
+
+    	set_updated();
     }
 
 public:
 
 	MIN_DESCRIPTION	{"Send DMX control data to one or more dimmers."};
 	MIN_TAGS		{"lxmax"};
-	MIN_AUTHOR		{"David Butler / The Impersonal Stereo"};
+	MIN_AUTHOR		{"David Butler"};
 	MIN_RELATED		{"lx.colorfixture"};
 
 	inlet<>  input	{ this, "(list) list of dimmer values" };
 
 	lx_dimmer(const atoms& args = {})
-    {
+	{
         if (!maxobj())
 			return;
 		
         _lxmax_service = get_lxmax_service_and_check_version(maxobj(), lxmax::GIT_VERSION_STR);
-        _fixture_manager = get_fixture_manager(maxobj(), _lxmax_service);
-
+		set_manager(get_fixture_manager(maxobj(), _lxmax_service));
+		
 		update_range(attr_input_range, attr_precision);
     }
     
@@ -178,7 +179,7 @@ public:
         description { "Number of dimmers to control" },
         category {"lx.dimmer"}, order { 1 },
         getter { MIN_GETTER_FUNCTION {
-            return { (int)_values.size() };
+            return { static_cast<int>(_values.size()) };
         }},
         setter { MIN_FUNCTION {
 
@@ -191,7 +192,7 @@ public:
         	for(int i = old_size; i < new_size; i++)
 				_values[i] = 0;
         	
-            return { (int)_values.size() };
+            return { static_cast<int>(_values.size()) };
         }}
     };
     
@@ -216,7 +217,7 @@ public:
         category {"lx.dimmer"}, order { 4 },
         setter { MIN_FUNCTION {
 
-            update_range(attr_input_range.get(), (lxmax::value_precision)args[0]);
+            update_range(attr_input_range.get(), static_cast<lxmax::value_precision>(args[0]));
             return { args[0] };
         }}
     };
@@ -228,7 +229,7 @@ public:
         category {"lx.dimmer"}, order { 5 },
         setter { MIN_FUNCTION {
 
-            update_range((lx_dimmer_range)args[0], attr_precision.get());
+            update_range(static_cast<lx_dimmer_range>(args[0]), attr_precision.get());
             return { args[0] };
         }}
     };

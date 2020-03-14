@@ -20,7 +20,7 @@ class lx_config : public object<lx_config>
 public:
 	MIN_DESCRIPTION { "Configure the LXMax service." };
 	MIN_TAGS { "lxmax" };
-	MIN_AUTHOR { "David Butler / The Impersonal Stereo" };
+	MIN_AUTHOR { "David Butler" };
 	MIN_RELATED { "lx.dimmer, lx.colorfixture" };
 
 	lx_config(const atoms& args = { })
