@@ -1,0 +1,84 @@
+shallow_clone: false
+
+init:
+  - ps: >-
+      if ($env:APPVEYOR_REPO_TAG -eq "true")
+      {
+          Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_TAG_NAME.TrimStart("v"))"
+          $env:APPVEYOR_CACHE_SKIP_RESTORE = "true"
+      }
+      else
+      {
+          Update-AppveyorBuild -Version "dev-$($env:APPVEYOR_REPO_COMMIT.Substring(0, 7))"
+      }
+
+image:
+  - Visual Studio 2019
+
+platform:
+  - x64
+  
+configuration: 
+  - Debug
+  - Release
+
+install:
+  - git submodule update --init --recursive
+  - SET PATH=C:\Python37;C:\Python37\Scripts;%PATH%
+  - pip install conan -q
+  
+cache:
+  - C:\.conan -> appveyor.yml, conanfile.py
+  - '%USERPROFILE%\.conan -> appveyor.yml, conanfile.py'
+
+build_script:
+  - mkdir build
+  - cd build
+  
+  - SET VS_ARCH=""
+  - if "%platform%" == "x64" SET VS_ARCH=-A%PLATFORM%
+  - if "%CONFIGURATION%" == "Debug" (SET COMPILER_RUNTIME=MTd) else (SET COMPILER_RUNTIME=MT)
+  - echo CONFIGURATION = %CONFIGURATION%
+  - echo VS_ARCH = %VS_ARCH%
+  - echo COMPILER_RUNTIME = %COMPILER_RUNTIME%
+  - conan install .. -s build_type=%CONFIGURATION% -g cmake -s compiler="Visual Studio" -s compiler.runtime=%COMPILER_RUNTIME% --build=missing > %APPVEYOR_BUILD_FOLDER%\conan.log
+  - cmake %VS_ARCH% .. -DCONAN_MULTI=OFF > %APPVEYOR_BUILD_FOLDER%\configure.log
+  - cmake --build . --config %CONFIGURATION% > %APPVEYOR_BUILD_FOLDER%\build.log
+  - cd ..
+  - mkdir %APPVEYOR_PROJECT_NAME%
+  - if exist docs cp -r docs %APPVEYOR_PROJECT_NAME%
+  - if exist examples cp -r examples %APPVEYOR_PROJECT_NAME%
+  - if exist extensions cp -r extensions %APPVEYOR_PROJECT_NAME%
+  - if exist externals cp -r externals %APPVEYOR_PROJECT_NAME%
+  - if exist extras cp -r extras %APPVEYOR_PROJECT_NAME%
+  - if exist help cp -r help %APPVEYOR_PROJECT_NAME%
+  - if exist init cp -r init %APPVEYOR_PROJECT_NAME%
+  - if exist java-classes cp -r java-classes %APPVEYOR_PROJECT_NAME%
+  - if exist java-doc cp -r java-doc %APPVEYOR_PROJECT_NAME%
+  - if exist jsui cp -r jsui %APPVEYOR_PROJECT_NAME%
+  - if exist patchers cp -r patchers %APPVEYOR_PROJECT_NAME%
+  - if exist tests cp -r tests %APPVEYOR_PROJECT_NAME%
+  - cp icon.png %APPVEYOR_PROJECT_NAME%
+  - cp License.md %APPVEYOR_PROJECT_NAME%
+  - cp package-info.json %APPVEYOR_PROJECT_NAME%
+  - cp ReadMe.md %APPVEYOR_PROJECT_NAME%
+  - set SHORT_COMMIT=%APPVEYOR_REPO_COMMIT:~0,7%
+  - if "%APPVEYOR_REPO_TAG%" == "true" (SET BUILD_ARCHIVE_NAME=%APPVEYOR_PROJECT_NAME%-win-%platform%-%APPVEYOR_REPO_TAG_NAME%-%CONFIGURATION%.zip) else (SET BUILD_ARCHIVE_NAME=%APPVEYOR_PROJECT_NAME%-win-%platform%-%SHORT_COMMIT%-%CONFIGURATION%.zip)
+  - 7z a %BUILD_ARCHIVE_NAME% %APPVEYOR_PROJECT_NAME% > %APPVEYOR_BUILD_FOLDER%\archive.log
+
+test_script:
+  - cd build
+  - ctest -C %CONFIGURATION% . -V > %APPVEYOR_BUILD_FOLDER%\test.log
+
+artifacts:
+  - name: Build
+    path: '*.zip'
+  - name: Log files
+    path: '*.log'
+    
+on_failure:
+  - appveyor PushArtifact %APPVEYOR_BUILD_FOLDER%\conan.log
+  - appveyor PushArtifact %APPVEYOR_BUILD_FOLDER%\configure.log
+  - appveyor PushArtifact %APPVEYOR_BUILD_FOLDER%\build.log
+  - appveyor PushArtifact %APPVEYOR_BUILD_FOLDER%\test.log
+  

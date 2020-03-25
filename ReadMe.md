@@ -2,6 +2,8 @@
 
 Lighting and DMX control extensions package for Cycling 74's Max.
 
+[![Build status](https://ci.appveyor.com/api/projects/status/dhhn58a4forb88vy/branch/master?svg=true)](https://ci.appveyor.com/project/impsnldavid/lxmax/branch/master)
+
 ## Why LXMax
 The goal of LXMax is to go beyond simple DMX protocol support/hardware communication (which there are numerous externals already available for) and instead provide full first-class support for the DMX protocol and lighting control as a concept in the Max environment. You don't have to understand how a MIDI note on message is formatted in order to send one in Max, you use the noteout object. Similarily LXMax frees you from having to understand much about DMX or build a mechanism in your patcher to aggregate data into a long list of values. Instead you can simply create objects which represent each DMX fixture.
 

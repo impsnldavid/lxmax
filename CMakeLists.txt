@@ -2,6 +2,9 @@
 # Use of this source code is governed by the MIT License found in the LICENSE file.
 
 cmake_minimum_required(VERSION 3.0)
+project(lxmax)
+
+option(CONAN_MULTI "Use Conan Multi CMake Generator" ON)
 
 string(REGEX REPLACE "(.*)/" "" THIS_PACKAGE_NAME "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -42,7 +45,11 @@ if(MSVC)
 endif()
 
 # Install dependencies
-include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
+if (CONAN_MULTI)
+	include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
+else()
+	include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+endif()
 conan_basic_setup(TARGETS)
 
 # Misc setup and subroutines
