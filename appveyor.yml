@@ -44,7 +44,7 @@ for:
       
       - SET VS_ARCH=""
       - if "%platform%" == "x64" SET VS_ARCH=-A%PLATFORM%
-      - if "%CONFIGURATION%" == "Debug" (SET COMPILER_RUNTIME=MTd) else (SET COMPILER_RUNTIME=MT)
+      - if "%CONFIGURATION%" == "Debug" (SET COMPILER_RUNTIME=MDd) else (SET COMPILER_RUNTIME=MD)
       - echo CONFIGURATION = %CONFIGURATION%
       - echo VS_ARCH = %VS_ARCH%
       - echo COMPILER_RUNTIME = %COMPILER_RUNTIME%
