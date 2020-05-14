@@ -29,25 +29,25 @@ namespace lxmax
 		{
 			Poco::Net::IPAddress artnet_nic_address;
 			_artnet_broadcast_address = Poco::Net::IPAddress("255.255.255.255");
-			
+
 			if (!_global_config.artnet_network_adapter.isWildcard())
 			{
 				try
 				{
 					const Poco::Net::NetworkInterface artnet_nic = Poco::Net::NetworkInterface::forAddress(
 						_global_config.artnet_network_adapter);
-					
+
 					artnet_nic.firstAddress(artnet_nic_address);
 
 					int index = 0;
-					for(const auto& t : artnet_nic.addressList())
+					for (const auto& t : artnet_nic.addressList())
 					{
 						if (t.get<0>() == artnet_nic_address)
 							break;
 
 						++index;
 					}
-					
+
 					_artnet_broadcast_address = artnet_nic.broadcastAddress(index);
 				}
 				catch (const Poco::Net::InterfaceNotFoundException& ex)
@@ -58,16 +58,16 @@ namespace lxmax
 						_global_config.artnet_network_adapter.toString());
 				}
 			}
-			
+
 			_artnet_socket = std::make_unique<Poco::Net::DatagramSocket>();
 
 			_artnet_socket->bind(Poco::Net::SocketAddress(artnet_nic_address, k_artnet_port), true, true);
 			_artnet_socket->setBroadcast(true);
 		}
-		
+
 		{
 			Poco::Net::NetworkInterface sacn_nic;
-			
+
 			if (!_global_config.sacn_network_adapter.isWildcard())
 			{
 				try
@@ -116,8 +116,6 @@ namespace lxmax
 	{
 		// TODO: Calculate full update time per universe
 
-		const auto universe_buffers = _write_manager->get_data();
-		
 		bool is_full_update = false;
 
 		const auto time_now = clock::now();
@@ -129,134 +127,141 @@ namespace lxmax
 
 		std::lock_guard<std::mutex> lock(_config_mutex);
 
+		auto updated_universes = _fixture_manager->write_to_buffer(is_full_update);
+
 		bool is_artnet_packet_sent = false;
 		bool is_sacn_packet_sent = false;
-		
+
 		for (const auto& config : _universe_configs)
 		{
 			if (!is_full_update)
 			{
-				if (std::find(std::begin(_updated_universes), std::end(_updated_universes), config.internal_universe) 
-					== std::end(_updated_universes))
+				if (std::find(std::begin(updated_universes), std::end(updated_universes), config.internal_universe)
+					== std::end(updated_universes))
 					continue;
 			}
 
-			const auto it = universe_buffers.find(config.internal_universe);
+			const auto data = _buffer_manager->get_universe_buffer(config.internal_universe);
 
-			if (it == std::end(universe_buffers))
+			if (!data.has_value())
 				continue;
-
-			std::vector<char> buffer;
 
 			try
 			{
 				switch (config.protocol)
-			{
-			case dmx_protocol::artnet:
+				{
+				case dmx_protocol::artnet:
 				{
 					if (!_artnet_socket)
 						continue;
-					
+
 					if (!is_artnet_packet_sent)
 					{
 						_artnet_sequence = _artnet_sequence >= 255 ? 1 : _artnet_sequence + 1;
 						is_artnet_packet_sent = true;
 					}
-					
-					dmx_packet_artnet packet(config.protocol_universe, _artnet_sequence, it->second);
+
+					dmx_packet_artnet packet(config.protocol_universe, _artnet_sequence, data.value());
 					const auto packet_buffer = packet.serialize();
 
 					if (config.is_use_global_destination)
 					{
 						if (_global_config.is_artnet_global_destination_broadcast)
 						{
-							Poco::Net::SocketAddress address { _artnet_broadcast_address, k_artnet_port };
-		                    _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							Poco::Net::SocketAddress address{_artnet_broadcast_address, k_artnet_port};
+							_artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
 						}
 						else
 						{
-							for(const auto& a : _global_config.artnet_global_destination_unicast_addresses)
-		                    {
-		                        Poco::Net::SocketAddress address { a, k_artnet_port };
-		                        _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
-		                    }
+							for (const auto& a : _global_config.artnet_global_destination_unicast_addresses)
+							{
+								Poco::Net::SocketAddress address{a, k_artnet_port};
+								_artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							}
 						}
 					}
 					else
 					{
 						if (config.is_broadcast_or_multicast)
 						{
-							Poco::Net::SocketAddress address { _artnet_broadcast_address, k_artnet_port };
-		                    _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							Poco::Net::SocketAddress address{_artnet_broadcast_address, k_artnet_port};
+							_artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
 						}
 						else
 						{
-							for(const auto& a : config.unicast_addresses)
-		                    {
-		                        Poco::Net::SocketAddress address { a, k_artnet_port };
-		                        _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
-		                    }
+							for (const auto& a : config.unicast_addresses)
+							{
+								Poco::Net::SocketAddress address{a, k_artnet_port};
+								_artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							}
 						}
 					}
 				}
 				break;
 
-			case dmx_protocol::sacn:
+				case dmx_protocol::sacn:
 				{
 					if (!_sacn_socket)
 						continue;
-					
+
 					if (!is_sacn_packet_sent)
 					{
 						_sacn_sequence = _sacn_sequence >= 255 ? 0 : _sacn_sequence + 1;
 						is_sacn_packet_sent = true;
 					}
-					
-					dmx_packet_sacn packet(_system_id, _system_name, config.priority, 
-						_global_config.is_send_sacn_sync_packets ? _global_config.sacn_sync_address : 0,
-					               _sacn_sequence, sacn_options_flags::none, config.protocol_universe, it->second);
+
+					dmx_packet_sacn packet(_system_id, _system_name, config.priority,
+					                       _global_config.is_send_sacn_sync_packets
+						                       ? _global_config.sacn_sync_address
+						                       : 0,
+					                       _sacn_sequence, sacn_options_flags::none, config.protocol_universe,
+					                       data.value());
 					const auto packet_buffer = packet.serialize();
 
 					if (config.is_use_global_destination)
 					{
 						if (_global_config.is_sacn_global_destination_multicast)
 						{
-							Poco::Net::SocketAddress address { get_sacn_multicast_address(config.protocol_universe), k_sacn_port };
-		                    _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							Poco::Net::SocketAddress address{
+								get_sacn_multicast_address(config.protocol_universe), k_sacn_port
+							};
+							_sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
 						}
 						else
 						{
-							for(const auto& a : _global_config.sacn_global_destination_unicast_addresses)
-		                    {
-		                        Poco::Net::SocketAddress address { a, k_sacn_port };
-		                        _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
-		                    }
+							for (const auto& a : _global_config.sacn_global_destination_unicast_addresses)
+							{
+								Poco::Net::SocketAddress address{a, k_sacn_port};
+								_sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							}
 						}
 					}
 					else
 					{
 						if (config.is_broadcast_or_multicast)
 						{
-							Poco::Net::SocketAddress address { get_sacn_multicast_address(config.protocol_universe), k_sacn_port };
-		                    _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							Poco::Net::SocketAddress address{
+								get_sacn_multicast_address(config.protocol_universe), k_sacn_port
+							};
+							_sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
 						}
 						else
 						{
-							for(const auto& a : config.unicast_addresses)
-		                    {
-		                        Poco::Net::SocketAddress address { a, k_sacn_port };
-		                        _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
-		                    }
+							for (const auto& a : config.unicast_addresses)
+							{
+								Poco::Net::SocketAddress address{a, k_sacn_port};
+								_sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+							}
 						}
 					}
 				}
 				break;
 
-			default:
-				break;
+				default:
+					break;
+				}
 			}
-			}
-			catch(const Poco::Net::NetException& ex)
+			catch (const Poco::Net::NetException& ex)
 			{
 				// TODO: Can't log to Max from this thread, implement a logging system based off a Max timer
 				//poco_error(_log, "Failed to send DMX data for internal universe %hu - %s", config.internal_universe, ex.message());
@@ -268,17 +273,17 @@ namespace lxmax
 			sync_packet_artnet packet;
 			const auto packet_buffer = packet.serialize();
 
-			Poco::Net::SocketAddress address { _artnet_broadcast_address, k_artnet_port };
-	        _artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+			Poco::Net::SocketAddress address{_artnet_broadcast_address, k_artnet_port};
+			_artnet_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
 		}
-	
+
 		if (_global_config.is_send_sacn_sync_packets && is_sacn_packet_sent)
 		{
 			sync_packet_sacn packet(_system_id, _sacn_sync_sequence, _global_config.sacn_sync_address);
 			const auto packet_buffer = packet.serialize();
 
-			Poco::Net::SocketAddress address { get_sacn_multicast_address(_global_config.sacn_sync_address), k_sacn_port };
-	        _sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
+			Poco::Net::SocketAddress address{get_sacn_multicast_address(_global_config.sacn_sync_address), k_sacn_port};
+			_sacn_socket->sendTo(packet_buffer.data(), packet_buffer.size(), address);
 
 			_sacn_sync_sequence = _sacn_sync_sequence >= 255 ? 1 : _sacn_sync_sequence + 1;
 		}

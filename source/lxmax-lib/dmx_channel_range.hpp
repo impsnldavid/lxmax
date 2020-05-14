@@ -23,9 +23,9 @@ namespace lxmax
 			
 		}
 		
-		dmx_channel_range(universe_address universe, int channel_count)
+		dmx_channel_range(universe_address universe, int start_channel, int channel_count)
 			: _start(universe * k_universe_length),
-			_end(_start + channel_count)
+			_end(_start + (start_channel - 1) + channel_count)
 		{
 			
 		}

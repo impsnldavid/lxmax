@@ -150,6 +150,13 @@ class lx_dimmer : public object<lx_dimmer>, public lxmax::fixture {
                 break;
         }
 
+    	update_patch_info(attr_universe.get(), attr_channel.get(), attr_priority.get());
+    }
+
+	void update_patch_info(int universe, int channel, lx_dimmer_priority priority)
+    {
+	    set_patch_info(lxmax::fixture_patch_info("Dimmer", priority == lx_dimmer_priority::htp, 
+            { universe, channel, _channel_count}));
     	set_updated();
     }
 
@@ -164,13 +171,14 @@ public:
 
 	lx_dimmer(const atoms& args = {})
 	{
-        if (!maxobj())
+        if (dummy())
 			return;
 		
         _lxmax_service = get_lxmax_service_and_check_version(*this, lxmax::GIT_VERSION_STR);
-		set_manager(get_fixture_manager(*this, _lxmax_service));
 		
 		update_range(attr_input_range, attr_precision);
+		set_manager(get_fixture_manager(*this, _lxmax_service));
+		update_patch_info(attr_universe.get(), attr_channel.get(), attr_priority.get());
     }
     
     attribute<int, threadsafe::no, limit::clamp> attr_num_dimmers { this, "num_dimmers", 1,
@@ -200,14 +208,24 @@ public:
         range { 1, 512 },
         title { "DMX Channel" },
 		description { "DMX start channel for dimmer(s)" },
-        category {"lx.dimmer"}, order { 2 }
+        category {"lx.dimmer"}, order { 2 },
+    	setter { MIN_FUNCTION {
+
+            update_patch_info(attr_universe.get(), args[0], attr_priority.get());
+            return { args[0] };
+        }}
 	};
     
     attribute<int, threadsafe::no, limit::clamp> attr_universe { this, "universe", 1,
         range { lxmax::k_universe_min, lxmax::k_universe_max },
         title { "DMX Universe" },
         description { "DMX universe number" },
-        category {"lx.dimmer"}, order { 3 }
+        category {"lx.dimmer"}, order { 3 },
+    	setter { MIN_FUNCTION {
+
+            update_patch_info(args[0], attr_channel.get(), attr_priority.get());
+            return { args[0] };
+        }}
     };
                                     
     attribute<lxmax::value_precision> attr_precision { this, "precision",
@@ -238,7 +256,12 @@ public:
 		lx_dimmer_priority::htp, lx_dimmer_priority_info,
         title { "Priority" },
         description { "Priority mode when merging with other LXMax object's data" },
-        category {"lx.dimmer"}, order { 3 }
+        category {"lx.dimmer"}, order { 3 },
+		setter { MIN_FUNCTION {
+
+            update_patch_info(attr_universe.get(), attr_channel.get(), static_cast<lx_dimmer_priority>(args[0]));
+            return { args[0] };
+        }}
     };
     
     attribute<numbers> attr_value { this, "value", { 0 },
@@ -302,21 +325,33 @@ public:
     	if (it == std::end(buffer_map))
 			return false;
 
-    	lxmax::universe_buffer buffer = it->second;
-
+    	lxmax::universe_buffer& buffer = it->second;
+		
 		{
     		std::lock_guard<std::mutex> lock(_value_mutex);
 
 			int channel = patch_info.channel_range.start_local();
 
 			auto value_it = std::begin(_values);
-	    	
-			while(channel + _precision_width <= lxmax::k_universe_length && value_it != std::end(_values))
-			{
-				write_with_precision(*value_it, _value_max, &buffer[channel], attr_precision);		
-				++value_it;
-				channel += _precision_width;
-			}
+
+            if (patch_info.is_htp)
+            {
+	            while(channel + _precision_width <= lxmax::k_universe_length && value_it != std::end(_values))
+				{
+					lxmax::write_with_precision_htp(*value_it, _value_max, &buffer[channel], attr_precision);		
+					++value_it;
+					channel += _precision_width;
+				}
+            }
+            else
+            {
+	            while(channel + _precision_width <= lxmax::k_universe_length && value_it != std::end(_values))
+				{
+					lxmax::write_with_precision_ltp(*value_it, _value_max, &buffer[channel], attr_precision);		
+					++value_it;
+					channel += _precision_width;
+				}
+            }
 
 	    	clear_updated(); 
 		}

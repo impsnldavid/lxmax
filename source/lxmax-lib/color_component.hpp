@@ -13,9 +13,18 @@
 
 namespace lxmax
 {
+    enum class colorspace
+	{
+    	none,
+		rgb,
+		cmy,
+    	hsb
+	};
+	
     enum class color_component
     {
         none,
+    	fixed,
         red,
         blue,
         green,
@@ -25,12 +34,9 @@ namespace lxmax
         hue,
         saturation,
         brightness,
-        lightness,
-        value,
         white,
         amber,
-        intensity,
-        dimmer
+        intensity
     };
 
     namespace color_component_helper
@@ -38,6 +44,7 @@ namespace lxmax
         const std::unordered_map<color_component, std::string> k_color_to_string_map
         {
             { color_component::none , "_" },
+        	{ color_component::fixed , "F" },
             { color_component::red , "R" },
             { color_component::green , "G" },
             { color_component::blue , "B" },
@@ -47,17 +54,15 @@ namespace lxmax
             { color_component::hue , "H" },
             { color_component::saturation , "S" },
             { color_component::brightness , "Br" },
-            { color_component::lightness , "L" },
-            { color_component::value , "V" },
             { color_component::white , "W" },
             { color_component::amber , "A" },
-            { color_component::intensity , "I" },
-            { color_component::dimmer , "D" }
+            { color_component::intensity , "I" }
         };
     
         const std::unordered_map<std::string, color_component> k_string_to_color_map
         {
             { "_", color_component::none },
+        	{ "F", color_component::fixed },
             { "R", color_component::red },
             { "G", color_component::green },
             { "B", color_component::blue },
@@ -67,18 +72,15 @@ namespace lxmax
             { "H", color_component::hue },
             { "S", color_component::saturation },
             { "Br", color_component::brightness },
-            { "L", color_component::lightness },
-            { "V", color_component::value },
             { "W", color_component::white },
             { "A", color_component::amber },
-            { "I", color_component::intensity },
-            { "D", color_component::dimmer }
+            { "I", color_component::intensity }
         };
 
         inline bool from_string(const std::string& stringValue, color_component& value)
         {
 	        const auto it = k_string_to_color_map.find(stringValue);
-            if (it == k_string_to_color_map.end())
+            if (it == std::end(k_string_to_color_map))
             {
                 value = color_component::none;
                 return false;
@@ -91,10 +93,34 @@ namespace lxmax
         inline std::string to_string(color_component value)
         {
 	        const auto it = k_color_to_string_map.find(value);
-            assert(it != k_color_to_string_map.end(),
+            assert(it != std::end(k_color_to_string_map),
                             "All valid color components should exist in map");
             
             return it->second;
+        }
+
+        inline colorspace get_colorspace(color_component value)
+        {
+	        switch(value)
+	        {
+	        case color_component::red:
+	        case color_component::blue:
+	        case color_component::green:
+	        	return colorspace::rgb;
+	        	
+	        case color_component::cyan:
+	        case color_component::magenta:
+            case color_component::yellow:
+                return colorspace::cmy;
+	        	
+	        case color_component::hue:
+	        case color_component::saturation:
+	        case color_component::brightness:
+                return colorspace::hsb;
+
+	        default:
+	        	return colorspace::none;
+	        }
         }
     };
 }

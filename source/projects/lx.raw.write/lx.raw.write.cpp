@@ -31,7 +31,7 @@ public:
 
 	lx_raw_write(const atoms& args = {})
     {
-        if (!maxobj())
+        if (dummy())
 			return;
 		
         _lxmax_service = get_lxmax_service_and_check_version(*this, lxmax::GIT_VERSION_STR);

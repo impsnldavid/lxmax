@@ -7,6 +7,8 @@
 
 #include <set>
 
+
+#include "dmx_buffer_manager.hpp"
 #include "fixture.hpp"
 
 namespace lxmax
@@ -20,6 +22,7 @@ namespace lxmax
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 
+		_fixtures.erase(fixture);
 		_fixtures.insert(std::make_pair(fixture, fixture_info(patch_info)));
 
 		update_fixture_overlaps();
@@ -28,15 +31,19 @@ namespace lxmax
 	void fixture_manager::unregister_fixture(fixture* fixture)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
+		
+		const int erased_count = _fixtures.erase(fixture);
 
-		assert(_fixtures.erase(fixture));
-
-		update_fixture_overlaps();
+		if (erased_count > 0)
+			update_fixture_overlaps();
 	}
 
-	void fixture_manager::write_to_buffer(universe_buffer_map& buffers, bool is_force)
+	universe_updated_list fixture_manager::write_to_buffer(bool is_force)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
+
+		auto lock_and_buffers = _buffer_manager->get_universe_buffers();
+		universe_buffer_map& buffers = std::get<1>(lock_and_buffers);
 
 		universe_updated_list updated_universes;
 
@@ -69,6 +76,8 @@ namespace lxmax
 			if (did_write)
 				fixtures_written_to_buffer.push_back(entry.first);
 		}
+
+		return updated_universes;
 	}
 
 	void fixture_manager::update_fixture_overlaps()

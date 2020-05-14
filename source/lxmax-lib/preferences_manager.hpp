@@ -15,7 +15,7 @@
 #include <Poco/LineEndingConverter.h>
 #include <Poco/Util/JSONConfiguration.h>
 #include <Poco/NumberParser.h>
-#include <Poco/BasicEvent.h>
+#include <Poco/FIFOEvent.h>
 
 #include "version_info.hpp"
 #include "global_config.hpp"
@@ -63,8 +63,8 @@ namespace lxmax
 
 		
 	public:
-		Poco::BasicEvent<void> global_config_changed;
-		Poco::BasicEvent<void> universe_config_changed;
+		Poco::FIFOEvent<void> global_config_changed;
+		Poco::FIFOEvent<void> universe_config_changed;
 		
 		preferences_manager(Poco::Logger& log, std::string preferences_path)
 			: _log(log),

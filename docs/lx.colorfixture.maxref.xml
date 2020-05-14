@@ -6,14 +6,14 @@
 
 <c74object name='lx.colorfixture' category='lxmax'>
 
-	<digest>Send DMX control data to one or more dimmers</digest>
-	<description>Send DMX control data to one or more dimmers. </description>
+	<digest>Send DMX control data to a fixture with basic color control </digest>
+	<description>Send DMX control data to a fixture with basic color control </description>
 
 
 	<!--METADATA-->
 
 	<metadatalist>
-		<metadata name='author'>David Butler / The Impersonal Stereo </metadata>
+		<metadata name='author'>David Butler </metadata>
 		<metadata name='tag'>lxmax</metadata>
 	</metadatalist>
 
@@ -23,8 +23,8 @@
 	<objarglist>
 
 		<objarg name='channel' optional='1' type='number'>
-			<digest>DMX start channel for dimmer(s) </digest>
-			<description>DMX start channel for dimmer(s) </description>
+			<digest>DMX start channel for fixture </digest>
+			<description>DMX start channel for fixture </description>
 		</objarg>
 
 		<objarg name='universe' optional='1' type='number'>
@@ -62,8 +62,8 @@
 		</attribute>
 
 		<attribute name='personality' get='1' set='1' type='symbol' size='1' >
-			<digest>Defines the personality of the fixture from color components (R, G, B, C, M, Y, etc) </digest>
-			<description>Defines the personality of the fixture from color components (R, G, B, C, M, Y, etc) </description>
+			<digest>Defines the channel layout of the DMX fixture </digest>
+			<description>Defines the channel layout of the DMX fixture </description>
 		</attribute>
 
 	</attributelist>
@@ -72,6 +72,7 @@
 	<!--RELATED-->
 
 	<seealsolist>
+		<seealso name='lx.colorfixture' />
 	</seealsolist>
 
 

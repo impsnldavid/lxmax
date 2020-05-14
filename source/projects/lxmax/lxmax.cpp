@@ -50,7 +50,7 @@ class lxmax_service : public object<lxmax_service>
 
 	std::unique_ptr<lxmax::preferences_manager> _preferences_manager;
 	std::shared_ptr<lxmax::fixture_manager> _fixture_manager;
-	std::shared_ptr<lxmax::dmx_write_manager> _write_manager;
+	std::shared_ptr<lxmax::dmx_buffer_manager> _dmx_buffer_manager;
 	std::unique_ptr<lxmax::dmx_output_service> _dmx_output_service;
 	
 
@@ -208,7 +208,7 @@ public:
 
 	lxmax_service(const atoms& args = { })
 	{
-		if (!maxobj())
+		if (dummy())
 			return;
 		
 		Poco::Logger& root_logger = Poco::Logger::root();
@@ -226,12 +226,13 @@ public:
 
 		
 		_preferences_manager = std::make_unique<lxmax::preferences_manager>(Poco::Logger::get("Preferences Manager"), get_preference_path()),
-		_fixture_manager = std::make_shared<lxmax::fixture_manager>();
-		_write_manager = std::make_shared<lxmax::dmx_write_manager>();
-		_dmx_output_service = std::make_unique<lxmax::dmx_output_service>(Poco::Logger::get("DMX Output Service"), _write_manager);
+		_dmx_buffer_manager = std::make_shared<lxmax::dmx_buffer_manager>(Poco::Logger::get("DMX Buffer Manager"));
+		_fixture_manager = std::make_shared<lxmax::fixture_manager>(Poco::Logger::get("Fixture Manager"), _dmx_buffer_manager);
+		_dmx_output_service = std::make_unique<lxmax::dmx_output_service>(Poco::Logger::get("DMX Output Service"), _fixture_manager, _dmx_buffer_manager);
 		
 		
 		_preferences_manager->global_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_global_config);
+		_preferences_manager->universe_config_changed += Poco::delegate(_dmx_buffer_manager.get(), &lxmax::dmx_buffer_manager::update_universe_configs);
 		_preferences_manager->universe_config_changed += Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_universe_configs);
 		
 		_preferences_manager->load();
@@ -247,8 +248,15 @@ public:
 
 	~lxmax_service()
 	{
+		if (!maxobj())
+			return;
+		
 		if (_dmx_output_service)
 			_dmx_output_service->stop();
+
+		_preferences_manager->global_config_changed -= Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_global_config);
+		_preferences_manager->universe_config_changed -= Poco::delegate(_dmx_buffer_manager.get(), &lxmax::dmx_buffer_manager::update_universe_configs);
+		_preferences_manager->universe_config_changed -= Poco::delegate(_dmx_output_service.get(), &lxmax::dmx_output_service::update_universe_configs);
 
 		object_detach_byptr(maxobj(), _universes_editor);
 

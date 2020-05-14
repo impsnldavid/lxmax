@@ -8,6 +8,7 @@
 #include <vector>
 #include <Poco/Util/AbstractConfiguration.h>
 #include <Poco/Net/IPAddress.h>
+#include "common.hpp"
 
 namespace lxmax::config_helpers
 {

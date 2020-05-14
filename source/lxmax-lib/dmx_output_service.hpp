@@ -22,7 +22,8 @@
 #include "dmx_packet_artnet.hpp"
 #include "dmx_packet_sacn.hpp"
 #include "dmx_universe_config.hpp"
-#include "dmx_write_manager.hpp"
+#include "dmx_buffer_manager.hpp"
+#include "fixture_manager.hpp"
 #include "global_config.hpp"
 #include "preferences_manager.hpp"
 
@@ -31,13 +32,13 @@ namespace lxmax
 {
 	class dmx_output_service
 	{
-		const milliseconds k_full_update_interval{1000};
+		const milliseconds k_full_update_interval {1000};
 
 		Poco::Logger& _log;
 		
 		global_config _global_config;
 
-		bool _isRunning{false};
+		bool _isRunning {false};
 		Poco::Timer _timer;
 
 		std::unique_ptr<Poco::Net::DatagramSocket> _artnet_socket;
@@ -45,9 +46,8 @@ namespace lxmax
 
 		Poco::Net::IPAddress _artnet_broadcast_address;
 
-		std::shared_ptr<dmx_write_manager> _write_manager;
-		
-		universe_updated_list _updated_universes;
+		std::shared_ptr<fixture_manager> _fixture_manager;
+		std::shared_ptr<dmx_buffer_manager> _buffer_manager;
 
 		std::mutex _config_mutex;
 		std::vector<dmx_output_universe_config> _universe_configs;
@@ -63,11 +63,12 @@ namespace lxmax
 
 
 	public:
-		dmx_output_service(Poco::Logger& log, std::shared_ptr<dmx_write_manager> write_manager)
+		dmx_output_service(Poco::Logger& log, std::shared_ptr<fixture_manager> fixture_manager, std::shared_ptr<dmx_buffer_manager> buffer_manager)
 			: _log(log),
-			_write_manager(std::move(write_manager)),
-			  _system_name(Poco::Environment::nodeName()),
-			  _system_id(Poco::UUIDGenerator::defaultGenerator().createFromName(Poco::UUID(), _system_name))
+			_fixture_manager(std::move(fixture_manager)),
+			_buffer_manager(std::move(buffer_manager)),
+			_system_name(Poco::Environment::nodeName()),
+			_system_id(Poco::UUIDGenerator::defaultGenerator().createFromName(Poco::UUID(), _system_name))
 		{
 			
 		}

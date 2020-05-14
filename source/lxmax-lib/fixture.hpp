@@ -23,6 +23,8 @@ namespace lxmax
 	protected:
 		bool is_updated() const { return _is_updated; }
 
+		void set_patch_info(fixture_patch_info info);
+
 	public:
 		fixture() = default;
 
@@ -34,10 +36,6 @@ namespace lxmax
 		virtual ~fixture();
 
 		void set_manager(std::shared_ptr<fixture_manager> manager);
-		
-		void register_fixture(const fixture_patch_info& patch_info);
-
-		void unregister_fixture();
 
 		virtual bool write_to_buffer(const fixture_patch_info& patch_info, universe_buffer_map& buffer_map, universe_updated_list& updated_universes, bool is_force) = 0;
 
@@ -51,6 +49,21 @@ namespace lxmax
 		timestamp last_updated() const
 		{
 			return _last_updated;
+		}
+
+		int channel() const
+		{
+			return _patch_info.channel_range.start_local();
+		}
+
+		int universe() const
+		{
+			return _patch_info.channel_range.start_universe();
+		}
+
+		bool is_htp() const
+		{
+			return _patch_info.is_htp;
 		}
 	};
 }

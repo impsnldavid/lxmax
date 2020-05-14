@@ -9,7 +9,10 @@
 #include <unordered_map>
 #include <mutex>
 #include <vector>
+#include <Poco/Logger.h>
+
 #include "common.hpp"
+#include "dmx_buffer_manager.hpp"
 #include "fixture_patch_info.hpp"
 
 namespace lxmax
@@ -38,15 +41,26 @@ namespace lxmax
 	
 	class fixture_manager
 	{
+		Poco::Logger& _log;
+
+		std::shared_ptr<dmx_buffer_manager> _buffer_manager;
+		
 		std::mutex _mutex;
 		fixture_map _fixtures;
 
 	public:
+		fixture_manager(Poco::Logger& log, std::shared_ptr<dmx_buffer_manager> buffer_manager)
+			:_log(log),
+			_buffer_manager(std::move(buffer_manager))
+		{
+			
+		}
+		
 		void register_fixture(fixture* fixture, const fixture_patch_info& patch_info);
 
 		void unregister_fixture(fixture* fixture);
 
-		void write_to_buffer(universe_buffer_map& buffers, bool is_force = false);
+		universe_updated_list write_to_buffer(bool is_force = false);
 
 	private:
 		void update_fixture_overlaps();

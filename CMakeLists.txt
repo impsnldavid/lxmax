@@ -1,8 +1,10 @@
 # Copyright 2020 David Butler. All rights reserved.
 # Use of this source code is governed by the MIT License found in the LICENSE file.
 
-cmake_minimum_required(VERSION 3.0)
-project(lxmax)
+cmake_minimum_required(VERSION 3.15)
+cmake_policy(SET CMP0091 NEW)
+
+project(lxmax CXX)
 
 option(CONAN_MULTI "Use Conan Multi CMake Generator" ON)
 
