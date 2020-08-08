@@ -74,3 +74,13 @@ inline std::shared_ptr<lxmax::fixture_manager> get_fixture_manager(c74::min::obj
 
 	return *fixture_manager_ptr;
 }
+
+#define LXMAX_EXTERNAL(cpp_classname)													\
+    void wrap_##cpp_classname(void* r) {												\
+        c74::min::wrap_as_max_external<cpp_classname>(#cpp_classname, __FILE__, r);		\
+    }
+
+#define LXMAX_EXTERNAL_CUSTOM(cpp_classname, max_name)									\
+    void wrap_##cpp_classname(void* r) {												\
+        c74::min::wrap_as_max_external<cpp_classname>(#max_name, __FILE__, r);			\
+    }

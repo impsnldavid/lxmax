@@ -3,6 +3,8 @@
 /// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
+#pragma once
+
 #include "version_info.hpp"
 #include "dmx_output_service.hpp"
 #include "fixture_manager.hpp"
@@ -569,12 +571,12 @@ private:
 		this, "maxclass_setup",
 		MIN_FUNCTION
 		{
-			void* obj = max::object_new_typed(k_sym_nobox, symbol("lxmax"), 0, nullptr);
-			max::quittask_install(reinterpret_cast<max::method>(on_max_quit), obj);
+			//void* obj = max::object_new_typed(k_sym_nobox, symbol("lxmax"), 0, nullptr);
+			//max::quittask_install(reinterpret_cast<max::method>(on_max_quit), obj);
 
 			return { };
 		}
 	};
 };
 
-MIN_EXTERNAL_CUSTOM(lxmax_service, "lxmax")
+LXMAX_EXTERNAL_CUSTOM(lxmax_service, lxmax)

@@ -14,12 +14,18 @@ include_directories(
 )
 
 set( HEADER_FILES
+	common.hpp
 	dict_edit.hpp
+	lxmax.hpp
+	lx.colorfixture.hpp
+	lx.config.hpp
+	lx.dimmer.hpp
+	lx.raw.write.hpp
 	max_console_channel.hpp
 )
 
 set( SOURCE_FILES
-	${PROJECT_NAME}.cpp
+	main.cpp
 )
 
 add_library( 
@@ -32,9 +38,6 @@ add_library(
 target_link_libraries(${PROJECT_NAME} PRIVATE
 	lxmax-lib
 )
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY
-             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 include(${C74_MIN_API_DIR}/script/min-posttarget.cmake)
 

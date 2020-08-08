@@ -3,6 +3,8 @@
 /// @copyright	Copyright 2020 David Butler. All rights reserved.
 /// @license	Use of this source code is governed by the MIT License found in the License.md file.
 
+#pragma once
+
 #include "version_info.hpp"
 #include "c74_min.h"
 #include "fixture.hpp"
@@ -93,5 +95,4 @@ public:
     };
 };
 
-
-MIN_EXTERNAL(lx_raw_write);
+LXMAX_EXTERNAL(lx_raw_write)

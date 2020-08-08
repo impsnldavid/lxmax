@@ -3,6 +3,8 @@
 ///	@copyright	Copyright 2019 David Butler / The Impersonal Stereo. All rights reserved.
 /// @license    Use of this source code is governed by the MIT License found in the License.md file.
 
+#pragma once
+
 #include <Poco/Net/NetworkInterface.h>
 
 #include "version_info.hpp"
@@ -195,4 +197,4 @@ public:
 	};
 };
 
-MIN_EXTERNAL(lx_config);
+LXMAX_EXTERNAL(lx_config)
